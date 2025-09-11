@@ -81,7 +81,7 @@
   - _Requirements: 1.5, 3.4, 4.4_
   - _Prompt: Role: API Developer with expertise in Hono.js and REST endpoint design | Task: Create task API routes following requirements 1.5, 3.4, and 4.4, using existing Hono.js patterns from src/server/hono/route.ts | Restrictions: Must follow existing API patterns, implement proper request validation, ensure consistent error responses | Success: All task endpoints work correctly, proper HTTP status codes, consistent with existing API design_
 
-- [ ] 10. Integrate task routes with main Hono app in src/server/hono/route.ts
+- [x] 10. Integrate task routes with main Hono app in src/server/hono/route.ts
   - File: src/server/hono/route.ts (modify existing)
   - Add task routes to main Hono application
   - Configure route mounting and middleware
