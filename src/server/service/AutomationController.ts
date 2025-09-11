@@ -1,14 +1,23 @@
+import type { TaskConfig, TaskStatus } from "../../lib/types/task";
+import { ClaudeCodeTaskController } from "./claude-code/ClaudeCodeTaskController";
+import type { AliveClaudeCodeTask } from "./claude-code/types";
 import type { EventBus } from "./events/EventBus";
 import { getEventBus } from "./events/EventBus";
-import type { SessionDetail } from "./types";
 import { getSession } from "./session/getSession";
-import { taskMonitoringService, type TaskProgress } from "./TaskMonitoringService";
-import { taskProgressTracker, type TaskProgressError } from "./TaskProgressTracker";
-import type { TaskConfig, TaskStatus } from "../../lib/types/task";
-import type { AliveClaudeCodeTask } from "./claude-code/types";
-import { ClaudeCodeTaskController } from "./claude-code/ClaudeCodeTaskController";
-import type { AutomationError, AutomationStartResult, AutomationStatusResult } from "./types/automation";
-
+import {
+  type TaskProgress,
+  taskMonitoringService,
+} from "./TaskMonitoringService";
+import {
+  type TaskProgressError,
+  taskProgressTracker,
+} from "./TaskProgressTracker";
+import type { SessionDetail } from "./types";
+import type {
+  AutomationError,
+  AutomationStartResult,
+  AutomationStatusResult,
+} from "./types/automation";
 
 /**
  * Task completion detection result
@@ -65,14 +74,15 @@ export class AutomationController {
       }
 
       // Start Claude Code session
-      const claudeCodeTask = await this.claudeCodeController.startOrContinueTask(
-        {
-          cwd: projectPath,
-          projectId: taskConfig.projectId,
-          sessionId: undefined, // Start new session
-        },
-        taskConfig.prompt,
-      );
+      const claudeCodeTask =
+        await this.claudeCodeController.startOrContinueTask(
+          {
+            cwd: projectPath,
+            projectId: taskConfig.projectId,
+            sessionId: undefined, // Start new session
+          },
+          taskConfig.prompt,
+        );
 
       // Create active task entry
       const activeTask: ActiveTask = {
@@ -291,10 +301,13 @@ export class AutomationController {
   /**
    * Detect if task is complete based on completion condition
    */
-  private detectTaskCompletion(progress: TaskProgress): CompletionDetectionResult {
+  private detectTaskCompletion(
+    progress: TaskProgress,
+  ): CompletionDetectionResult {
     try {
       // Validate progress data
-      const validationResult = taskProgressTracker.validateProgressData(progress);
+      const validationResult =
+        taskProgressTracker.validateProgressData(progress);
 
       if (!validationResult.success) {
         return {
@@ -412,7 +425,10 @@ export class AutomationController {
       const result = await getSession(projectId, sessionId);
       return result.session;
     } catch (error) {
-      console.warn(`Failed to get session ${sessionId} for project ${projectId}:`, error);
+      console.warn(
+        `Failed to get session ${sessionId} for project ${projectId}:`,
+        error,
+      );
       return null;
     }
   }

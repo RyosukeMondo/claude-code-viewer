@@ -480,6 +480,143 @@ export const routes = (app: HonoAppType) => {
           },
         );
       })
+
+      // Task API routes
+      .post(
+        "/projects/:projectId/tasks/start",
+        zValidator(
+          "json",
+          z.object({
+            prompt: z.string().min(1, "Prompt is required"),
+            completionCondition: z
+              .literal("spec-workflow")
+              .default("spec-workflow"),
+          }),
+        ),
+        async (c) => {
+          const { projectId } = c.req.param();
+          const { prompt, completionCondition } = c.req.valid("json");
+          const { project } = await getProject(projectId);
+
+          if (project.meta.projectPath === null) {
+            return c.json({ error: "Project path not found" }, 400);
+          }
+
+          try {
+            const task = await taskController.startOrContinueTask(
+              {
+                projectId,
+                cwd: project.meta.projectPath,
+              },
+              prompt,
+            );
+
+            return c.json({
+              taskId: task.id,
+              sessionId: task.sessionId,
+              userMessageId: task.userMessageId,
+              status: task.status,
+              completionCondition,
+            });
+          } catch (error) {
+            console.error("Start task error:", error);
+            if (error instanceof Error) {
+              return c.json({ error: error.message }, 500);
+            }
+            return c.json({ error: "Failed to start task" }, 500);
+          }
+        },
+      )
+
+      .post(
+        "/projects/:projectId/tasks/:sessionId/continue",
+        zValidator(
+          "json",
+          z.object({
+            prompt: z.string().min(1, "Prompt is required"),
+            completionCondition: z
+              .literal("spec-workflow")
+              .default("spec-workflow"),
+          }),
+        ),
+        async (c) => {
+          const { projectId, sessionId } = c.req.param();
+          const { prompt, completionCondition } = c.req.valid("json");
+          const { project } = await getProject(projectId);
+
+          if (project.meta.projectPath === null) {
+            return c.json({ error: "Project path not found" }, 400);
+          }
+
+          try {
+            const task = await taskController.startOrContinueTask(
+              {
+                projectId,
+                sessionId,
+                cwd: project.meta.projectPath,
+              },
+              prompt,
+            );
+
+            return c.json({
+              taskId: task.id,
+              sessionId: task.sessionId,
+              userMessageId: task.userMessageId,
+              status: task.status,
+              completionCondition,
+            });
+          } catch (error) {
+            console.error("Continue task error:", error);
+            if (error instanceof Error) {
+              return c.json({ error: error.message }, 500);
+            }
+            return c.json({ error: "Failed to continue task" }, 500);
+          }
+        },
+      )
+
+      .post(
+        "/projects/:projectId/tasks/cancel",
+        zValidator(
+          "json",
+          z.object({
+            sessionId: z.string().min(1, "Session ID is required"),
+          }),
+        ),
+        async (c) => {
+          const { sessionId } = c.req.valid("json");
+
+          try {
+            taskController.abortTask(sessionId);
+            return c.json({ message: "Task cancelled successfully" });
+          } catch (error) {
+            console.error("Cancel task error:", error);
+            if (error instanceof Error) {
+              return c.json({ error: error.message }, 404);
+            }
+            return c.json({ error: "Failed to cancel task" }, 500);
+          }
+        },
+      )
+
+      .get("/projects/:projectId/tasks/:sessionId/status", async (c) => {
+        const { sessionId } = c.req.param();
+
+        const task = taskController.aliveTasks.find(
+          (task) => task.sessionId === sessionId,
+        );
+
+        if (!task) {
+          return c.json({ error: "Task not found" }, 404);
+        }
+
+        return c.json({
+          taskId: task.id,
+          status: task.status,
+          sessionId: task.sessionId,
+          userMessageId: task.userMessageId,
+        });
+      })
   );
 };
 
