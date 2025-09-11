@@ -1,0 +1,27 @@
+{
+  "id": "approval_1757595678124_57lekq5ph",
+  "title": "Revised Product Steering Document Approval",
+  "filePath": ".spec-workflow/steering/product.md",
+  "type": "document",
+  "status": "needs-revision",
+  "createdAt": "2025-09-11T13:01:18.124Z",
+  "category": "steering",
+  "categoryName": "steering",
+  "response": "Feedback Summary (1 comments):\n\nSpecific Text Comments:\n1. \"## 成功指標\n\n- **セッション期間**: 会話とタスクの監視に費やされた平均時間\n- **リア...\": no need\n",
+  "annotations": "{\n  \"decision\": \"needs-revision\",\n  \"comments\": [\n    {\n      \"type\": \"selection\",\n      \"comment\": \"no need\",\n      \"timestamp\": \"2025-09-11T13:03:08.227Z\",\n      \"selectedText\": \"## 成功指標\\n\\n- **セッション期間**: 会話とタスクの監視に費やされた平均時間\\n- **リアルタイム同期パフォーマンス**: ファイルシステムの変更に対する応答時間 (<100 ミリ秒)\",\n      \"highlightColor\": {\n        \"bg\": \"rgba(255, 235, 59, 0.3)\",\n        \"border\": \"#FFEB3B\",\n        \"name\": \"#ffeb3b\"\n      },\n      \"id\": \"comment_1757595788227_lznmsynky\"\n    }\n  ],\n  \"summary\": \"Feedback Summary (1 comments):\\n\\nSpecific Text Comments:\\n1. \\\"## 成功指標\\n\\n- **セッション期間**: 会話とタスクの監視に費やされた平均時間\\n- **リア...\\\": no need\\n\",\n  \"timestamp\": \"2025-09-11T13:03:19.386Z\"\n}",
+  "respondedAt": "2025-09-11T13:03:19.758Z",
+  "comments": [
+    {
+      "type": "selection",
+      "comment": "no need",
+      "timestamp": "2025-09-11T13:03:08.227Z",
+      "selectedText": "## 成功指標\n\n- **セッション期間**: 会話とタスクの監視に費やされた平均時間\n- **リアルタイム同期パフォーマンス**: ファイルシステムの変更に対する応答時間 (<100 ミリ秒)",
+      "highlightColor": {
+        "bg": "rgba(255, 235, 59, 0.3)",
+        "border": "#FFEB3B",
+        "name": "#ffeb3b"
+      },
+      "id": "comment_1757595788227_lznmsynky"
+    }
+  ]
+}

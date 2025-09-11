@@ -1,0 +1,51 @@
+{
+  "id": "approval_1757595222175_afidgx9ns",
+  "title": "Product Steering Document Approval",
+  "filePath": ".spec-workflow/steering/product.md",
+  "type": "document",
+  "status": "needs-revision",
+  "createdAt": "2025-09-11T12:53:42.175Z",
+  "category": "steering",
+  "categoryName": "steering",
+  "response": "Feedback Summary (3 comments):\n\nSpecific Text Comments:\n1. \"- **ユーザー採用**: 月間アクティブユーザー数とセッション頻度\": no need active user numnber\n2. \"- **タスク完了率**: Webインターフェースを通じて正常に完了したクロードタスクの割合\": no need\n3. \"- **ユーザー満足度**: フィードバックスコアと機能の使用状況分析\": no need\n",
+  "annotations": "{\n  \"decision\": \"needs-revision\",\n  \"comments\": [\n    {\n      \"type\": \"selection\",\n      \"comment\": \"no need active user numnber\",\n      \"timestamp\": \"2025-09-11T12:59:26.533Z\",\n      \"selectedText\": \"- **ユーザー採用**: 月間アクティブユーザー数とセッション頻度\",\n      \"highlightColor\": {\n        \"bg\": \"rgba(255, 235, 59, 0.3)\",\n        \"border\": \"#FFEB3B\",\n        \"name\": \"#ffeb3b\"\n      },\n      \"id\": \"comment_1757595566533_80z89409b\"\n    },\n    {\n      \"type\": \"selection\",\n      \"comment\": \"no need\",\n      \"timestamp\": \"2025-09-11T12:59:43.349Z\",\n      \"selectedText\": \"- **タスク完了率**: Webインターフェースを通じて正常に完了したクロードタスクの割合\",\n      \"highlightColor\": {\n        \"bg\": \"rgba(255, 235, 59, 0.3)\",\n        \"border\": \"#FFEB3B\",\n        \"name\": \"#ffeb3b\"\n      },\n      \"id\": \"comment_1757595583349_qduzs58uc\"\n    },\n    {\n      \"type\": \"selection\",\n      \"comment\": \"no need\",\n      \"timestamp\": \"2025-09-11T12:59:50.685Z\",\n      \"selectedText\": \"- **ユーザー満足度**: フィードバックスコアと機能の使用状況分析\",\n      \"highlightColor\": {\n        \"bg\": \"rgba(255, 235, 59, 0.3)\",\n        \"border\": \"#FFEB3B\",\n        \"name\": \"#ffeb3b\"\n      },\n      \"id\": \"comment_1757595590685_jxaahlnaa\"\n    }\n  ],\n  \"summary\": \"Feedback Summary (3 comments):\\n\\nSpecific Text Comments:\\n1. \\\"- **ユーザー採用**: 月間アクティブユーザー数とセッション頻度\\\": no need active user numnber\\n2. \\\"- **タスク完了率**: Webインターフェースを通じて正常に完了したクロードタスクの割合\\\": no need\\n3. \\\"- **ユーザー満足度**: フィードバックスコアと機能の使用状況分析\\\": no need\\n\",\n  \"timestamp\": \"2025-09-11T13:00:18.685Z\"\n}",
+  "respondedAt": "2025-09-11T13:00:18.491Z",
+  "comments": [
+    {
+      "type": "selection",
+      "comment": "no need active user numnber",
+      "timestamp": "2025-09-11T12:59:26.533Z",
+      "selectedText": "- **ユーザー採用**: 月間アクティブユーザー数とセッション頻度",
+      "highlightColor": {
+        "bg": "rgba(255, 235, 59, 0.3)",
+        "border": "#FFEB3B",
+        "name": "#ffeb3b"
+      },
+      "id": "comment_1757595566533_80z89409b"
+    },
+    {
+      "type": "selection",
+      "comment": "no need",
+      "timestamp": "2025-09-11T12:59:43.349Z",
+      "selectedText": "- **タスク完了率**: Webインターフェースを通じて正常に完了したクロードタスクの割合",
+      "highlightColor": {
+        "bg": "rgba(255, 235, 59, 0.3)",
+        "border": "#FFEB3B",
+        "name": "#ffeb3b"
+      },
+      "id": "comment_1757595583349_qduzs58uc"
+    },
+    {
+      "type": "selection",
+      "comment": "no need",
+      "timestamp": "2025-09-11T12:59:50.685Z",
+      "selectedText": "- **ユーザー満足度**: フィードバックスコアと機能の使用状況分析",
+      "highlightColor": {
+        "bg": "rgba(255, 235, 59, 0.3)",
+        "border": "#FFEB3B",
+        "name": "#ffeb3b"
+      },
+      "id": "comment_1757595590685_jxaahlnaa"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "approval_1757596715412_e4mrwpqzo",
+  "title": "Task Feature Requirements Approval",
+  "filePath": ".spec-workflow/specs/task-feature/requirements.md",
+  "type": "document",
+  "status": "needs-revision",
+  "createdAt": "2025-09-11T13:18:35.412Z",
+  "category": "spec",
+  "categoryName": "task-feature",
+  "response": "Feedback Summary (1 comments):\n\nSpecific Text Comments:\n1. \"システムはdata.summary.totalがdata.summary.completedと等しい...\": it's spec-workflow's structure. make sure to provide clear error that if structure is not unexpected, error to check spec of spec-workflow so developer can know the change.\n",
+  "annotations": "{\n  \"decision\": \"needs-revision\",\n  \"comments\": [\n    {\n      \"type\": \"selection\",\n      \"comment\": \"it's spec-workflow's structure. make sure to provide clear error that if structure is not unexpected, error to check spec of spec-workflow so developer can know the change.\",\n      \"timestamp\": \"2025-09-11T13:30:19.809Z\",\n      \"selectedText\": \"システムはdata.summary.totalがdata.summary.completedと等しいかど\",\n      \"highlightColor\": {\n        \"bg\": \"rgba(255, 235, 59, 0.3)\",\n        \"border\": \"#FFEB3B\",\n        \"name\": \"#ffeb3b\"\n      },\n      \"id\": \"comment_1757597419809_to5c8oil9\"\n    }\n  ],\n  \"summary\": \"Feedback Summary (1 comments):\\n\\nSpecific Text Comments:\\n1. \\\"システムはdata.summary.totalがdata.summary.completedと等しい...\\\": it's spec-workflow's structure. make sure to provide clear error that if structure is not unexpected, error to check spec of spec-workflow so developer can know the change.\\n\",\n  \"timestamp\": \"2025-09-11T13:36:38.380Z\"\n}",
+  "respondedAt": "2025-09-11T13:36:38.885Z",
+  "comments": [
+    {
+      "type": "selection",
+      "comment": "it's spec-workflow's structure. make sure to provide clear error that if structure is not unexpected, error to check spec of spec-workflow so developer can know the change.",
+      "timestamp": "2025-09-11T13:30:19.809Z",
+      "selectedText": "システムはdata.summary.totalがdata.summary.completedと等しいかど",
+      "highlightColor": {
+        "bg": "rgba(255, 235, 59, 0.3)",
+        "border": "#FFEB3B",
+        "name": "#ffeb3b"
+      },
+      "id": "comment_1757597419809_to5c8oil9"
+    }
+  ]
+}

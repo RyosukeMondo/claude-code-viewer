@@ -77,9 +77,9 @@ export interface SpecWorkflowResult {
         /** Number of completed tasks */
         completed: number;
         /** Number of tasks in progress */
-        inProgress: number;
+        inProgress?: number;
         /** Number of pending tasks */
-        pending: number;
+        pending?: number;
       };
     };
   };

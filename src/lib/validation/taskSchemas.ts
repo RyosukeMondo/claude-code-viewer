@@ -48,11 +48,13 @@ export const SpecWorkflowSummarySchema = z.object({
   inProgress: z
     .number()
     .int()
-    .min(0, "In-progress tasks must be a non-negative integer"),
+    .min(0, "In-progress tasks must be a non-negative integer")
+    .optional(),
   pending: z
     .number()
     .int()
-    .min(0, "Pending tasks must be a non-negative integer"),
+    .min(0, "Pending tasks must be a non-negative integer")
+    .optional(),
 });
 
 /**
@@ -148,16 +150,17 @@ export function validateSpecWorkflowData(data: unknown) {
     // Add custom error for missing summary properties
     const summaryData = (data as { summary?: unknown }).summary;
     if (summaryData && typeof summaryData === "object") {
-      const requiredProps = ["total", "completed", "inProgress", "pending"];
-      const missingProps = requiredProps.filter(
+      const requiredProps = ["total", "completed"];
+      const optionalProps = ["inProgress", "pending"];
+      const missingRequired = requiredProps.filter(
         (prop) => !(prop in summaryData),
       );
-      if (missingProps.length > 0) {
+      if (missingRequired.length > 0) {
         return {
           success: false as const,
           error: {
             ...result.error,
-            message: `Spec-workflow summary structure changed. Expected '${requiredProps.join("', '")}' properties. Check spec-workflow specification for updates.`,
+            message: `Spec-workflow summary structure changed. Required properties missing: '${missingRequired.join("', '")}'. Optional properties: '${optionalProps.join("', '")}'. Check spec-workflow specification for updates.`,
           },
         };
       }

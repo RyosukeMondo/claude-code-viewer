@@ -1,0 +1,27 @@
+{
+  "id": "approval_1757597969530_8m9mu89ig",
+  "title": "Task Feature Design Document Approval",
+  "filePath": ".spec-workflow/specs/task-feature/design.md",
+  "type": "document",
+  "status": "needs-revision",
+  "createdAt": "2025-09-11T13:39:29.531Z",
+  "category": "spec",
+  "categoryName": "task-feature",
+  "response": "Feedback Summary (1 comments):\n\nSpecific Text Comments:\n1. \"### 統合テスト  \n- Claude Code API とのタスク実行サービスの統合\n- 会話の...\": remove integration test, e2e test.\n",
+  "annotations": "{\n  \"decision\": \"needs-revision\",\n  \"comments\": [\n    {\n      \"type\": \"selection\",\n      \"comment\": \"remove integration test, e2e test.\",\n      \"timestamp\": \"2025-09-11T13:42:44.953Z\",\n      \"selectedText\": \"### 統合テスト  \\n- Claude Code API とのタスク実行サービスの統合\\n- 会話の監視とツールの結果のキャプチャ\\n- セッション遷移にわたるタスクの進捗状況の追跡\\n- サービスからUIへのエラー処理フロー\\n\\n### エンドツーエンドテスト\\n- タスクの作成と実行のワークフローを完了する\\n- 自動化されたタスク継続シナリオ\\n- タスクのキャンセルとクリーンアップ手順\\n- エラー回復とユーザー通知フロー\",\n      \"highlightColor\": {\n        \"bg\": \"rgba(255, 235, 59, 0.3)\",\n        \"border\": \"#FFEB3B\",\n        \"name\": \"#ffeb3b\"\n      },\n      \"id\": \"comment_1757598164953_eutec2vpt\"\n    }\n  ],\n  \"summary\": \"Feedback Summary (1 comments):\\n\\nSpecific Text Comments:\\n1. \\\"### 統合テスト  \\n- Claude Code API とのタスク実行サービスの統合\\n- 会話の...\\\": remove integration test, e2e test.\\n\",\n  \"timestamp\": \"2025-09-11T13:42:50.232Z\"\n}",
+  "respondedAt": "2025-09-11T13:42:51.300Z",
+  "comments": [
+    {
+      "type": "selection",
+      "comment": "remove integration test, e2e test.",
+      "timestamp": "2025-09-11T13:42:44.953Z",
+      "selectedText": "### 統合テスト  \n- Claude Code API とのタスク実行サービスの統合\n- 会話の監視とツールの結果のキャプチャ\n- セッション遷移にわたるタスクの進捗状況の追跡\n- サービスからUIへのエラー処理フロー\n\n### エンドツーエンドテスト\n- タスクの作成と実行のワークフローを完了する\n- 自動化されたタスク継続シナリオ\n- タスクのキャンセルとクリーンアップ手順\n- エラー回復とユーザー通知フロー",
+      "highlightColor": {
+        "bg": "rgba(255, 235, 59, 0.3)",
+        "border": "#FFEB3B",
+        "name": "#ffeb3b"
+      },
+      "id": "comment_1757598164953_eutec2vpt"
+    }
+  ]
+}
