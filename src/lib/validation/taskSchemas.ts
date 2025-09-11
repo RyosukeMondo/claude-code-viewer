@@ -146,7 +146,7 @@ export function validateSpecWorkflowData(data: unknown) {
     }
 
     // Add custom error for missing summary properties
-    const summaryData = (data as Record<string, unknown>).summary;
+    const summaryData = (data as { summary?: unknown }).summary;
     if (summaryData && typeof summaryData === "object") {
       const requiredProps = ["total", "completed", "inProgress", "pending"];
       const missingProps = requiredProps.filter(
