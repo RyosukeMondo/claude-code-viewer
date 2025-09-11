@@ -167,7 +167,7 @@ export const ProjectPageContent = ({ projectId }: { projectId: string }) => {
                       {session.meta.lastModifiedAt
                         ? new Date(
                             session.meta.lastModifiedAt,
-                          ).toLocaleDateString()
+                          ).toLocaleDateString("en-US")
                         : ""}
                     </p>
                     <p className="text-xs text-muted-foreground font-mono">

@@ -17,16 +17,18 @@ export const ProjectList: FC = () => {
   const { data: projects } = useProjects();
 
   if (projects.length === 0) {
-    <Card>
-      <CardContent className="flex flex-col items-center justify-center py-12">
-        <FolderIcon className="w-12 h-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium mb-2">No projects found</h3>
-        <p className="text-muted-foreground text-center max-w-md">
-          No Claude Code projects found in your ~/.claude/projects directory.
-          Start a conversation with Claude Code to create your first project.
-        </p>
-      </CardContent>
-    </Card>;
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <FolderIcon className="w-12 h-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No projects found</h3>
+          <p className="text-muted-foreground text-center max-w-md">
+            No Claude Code projects found in your ~/.claude/projects directory.
+            Start a conversation with Claude Code to create your first project.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -48,7 +50,7 @@ export const ProjectList: FC = () => {
             <p className="text-sm text-muted-foreground">
               Last modified:{" "}
               {project.meta.lastModifiedAt
-                ? new Date(project.meta.lastModifiedAt).toLocaleDateString()
+                ? new Date(project.meta.lastModifiedAt).toLocaleDateString("en-US")
                 : ""}
             </p>
             <p className="text-xs text-muted-foreground">
