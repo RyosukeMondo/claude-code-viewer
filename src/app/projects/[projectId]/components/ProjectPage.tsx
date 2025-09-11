@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
+  CheckSquareIcon,
   ChevronDownIcon,
   FolderIcon,
   MessageSquareIcon,
@@ -29,6 +30,7 @@ import { useConfig } from "../../../hooks/useConfig";
 import { projectQueryConfig, useProject } from "../hooks/useProject";
 import { firstCommandToTitle } from "../services/firstCommandToTitle";
 import { NewChatModal } from "./newChat/NewChatModal";
+import { NewTaskModal } from "./newTask/NewTaskModal";
 
 export const ProjectPageContent = ({ projectId }: { projectId: string }) => {
   const {
@@ -63,7 +65,7 @@ export const ProjectPageContent = ({ projectId }: { projectId: string }) => {
               {project.meta.projectPath ?? project.claudeProjectPath}
             </h1>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex gap-2">
             <NewChatModal
               projectId={projectId}
               trigger={
@@ -71,6 +73,20 @@ export const ProjectPageContent = ({ projectId }: { projectId: string }) => {
                   <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="hidden sm:inline">Start New Chat</span>
                   <span className="sm:hidden">New Chat</span>
+                </Button>
+              }
+            />
+            <NewTaskModal
+              projectId={projectId}
+              trigger={
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 w-full sm:w-auto"
+                >
+                  <CheckSquareIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Start New Task</span>
+                  <span className="sm:hidden">New Task</span>
                 </Button>
               }
             />
@@ -128,15 +144,26 @@ export const ProjectPageContent = ({ projectId }: { projectId: string }) => {
                   conversation with Claude Code in this project to create
                   sessions.
                 </p>
-                <NewChatModal
-                  projectId={projectId}
-                  trigger={
-                    <Button size="lg" className="gap-2">
-                      <PlusIcon className="w-5 h-5" />
-                      Start First Chat
-                    </Button>
-                  }
-                />
+                <div className="flex gap-3 flex-col sm:flex-row">
+                  <NewChatModal
+                    projectId={projectId}
+                    trigger={
+                      <Button size="lg" className="gap-2">
+                        <PlusIcon className="w-5 h-5" />
+                        Start First Chat
+                      </Button>
+                    }
+                  />
+                  <NewTaskModal
+                    projectId={projectId}
+                    trigger={
+                      <Button size="lg" variant="outline" className="gap-2">
+                        <CheckSquareIcon className="w-5 h-5" />
+                        Start First Task
+                      </Button>
+                    }
+                  />
+                </div>
               </CardContent>
             </Card>
           ) : (
