@@ -360,6 +360,9 @@ export const routes = (app: HonoAppType) => {
               status: task.status,
               sessionId: task.sessionId,
               userMessageId: task.userMessageId,
+              completionCondition: task.completionCondition,
+              originalPrompt: task.originalPrompt,
+              autoContinue: task.autoContinue,
             }),
           ),
         });
@@ -464,6 +467,36 @@ export const routes = (app: HonoAppType) => {
               });
             });
 
+            eventBus.on("navigate_to_project", async (event) => {
+              if (!isConnected) {
+                return;
+              }
+
+              console.log(
+                "[SSE] Sending navigate_to_project event to client:",
+                event,
+              );
+              await stream.writeSSE(sseEventResponse(event)).catch(() => {
+                console.warn("Failed to write navigate_to_project SSE event");
+                onConnectionClosed();
+              });
+            });
+
+            eventBus.on("navigate_to_session", async (event) => {
+              if (!isConnected) {
+                return;
+              }
+
+              console.log(
+                "[SSE] Sending navigate_to_session event to client:",
+                event,
+              );
+              await stream.writeSSE(sseEventResponse(event)).catch(() => {
+                console.warn("Failed to write navigate_to_session SSE event");
+                onConnectionClosed();
+              });
+            });
+
             // 初期接続確認メッセージ
             eventBus.emit("connected", {
               type: "connected",
@@ -491,11 +524,16 @@ export const routes = (app: HonoAppType) => {
             completionCondition: z
               .literal("spec-workflow")
               .default("spec-workflow"),
+            autoContinue: z.boolean().default(true),
           }),
         ),
         async (c) => {
           const { projectId } = c.req.param();
-          const { prompt, completionCondition } = c.req.valid("json");
+          const { prompt, completionCondition, autoContinue } =
+            c.req.valid("json");
+          console.log(
+            `[API] Starting task for project ${projectId} with completionCondition: ${completionCondition}`,
+          );
           const { project } = await getProject(projectId);
 
           if (project.meta.projectPath === null) {
@@ -507,6 +545,8 @@ export const routes = (app: HonoAppType) => {
               {
                 projectId,
                 cwd: project.meta.projectPath,
+                completionCondition,
+                autoContinue,
               },
               prompt,
             );
@@ -537,11 +577,16 @@ export const routes = (app: HonoAppType) => {
             completionCondition: z
               .literal("spec-workflow")
               .default("spec-workflow"),
+            autoContinue: z.boolean().default(true),
           }),
         ),
         async (c) => {
           const { projectId, sessionId } = c.req.param();
-          const { prompt, completionCondition } = c.req.valid("json");
+          const { prompt, completionCondition, autoContinue } =
+            c.req.valid("json");
+          console.log(
+            `[API] Continuing task for session ${sessionId} with completionCondition: ${completionCondition}`,
+          );
           const { project } = await getProject(projectId);
 
           if (project.meta.projectPath === null) {
@@ -554,6 +599,8 @@ export const routes = (app: HonoAppType) => {
                 projectId,
                 sessionId,
                 cwd: project.meta.projectPath,
+                completionCondition,
+                autoContinue,
               },
               prompt,
             );

@@ -13,7 +13,8 @@ import { NewTask } from "./NewTask";
 export const NewTaskModal: FC<{
   projectId: string;
   trigger?: ReactNode;
-}> = ({ projectId, trigger }) => {
+  initialMessage?: string;
+}> = ({ projectId, trigger, initialMessage }) => {
   const [open, setOpen] = useState(false);
 
   const handleSuccess = () => {
@@ -37,7 +38,11 @@ export const NewTaskModal: FC<{
             Create New Task
           </DialogTitle>
         </DialogHeader>
-        <NewTask projectId={projectId} onSuccess={handleSuccess} />
+        <NewTask
+          projectId={projectId}
+          onSuccess={handleSuccess}
+          initialMessage={initialMessage}
+        />
       </DialogContent>
     </Dialog>
   );

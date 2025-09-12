@@ -89,27 +89,68 @@ export class TaskMonitoringService {
   ): SpecWorkflowResult[] {
     const results: SpecWorkflowResult[] = [];
 
+    // Build a map of tool_use_id to tool_use for spec-workflow tools
+    const specWorkflowToolUses = new Map<string, any>();
+
     for (const conversation of conversations) {
       // Skip error entries
       if (conversation.type === "x-error") {
         continue;
       }
 
-      if (conversation.type === "assistant") {
-        // Check for tool use and tool result pairs
-        const toolUsages = this.findSpecWorkflowToolUsage(conversation);
+      // Collect tool_use entries from assistant messages
+      if (
+        conversation.type === "assistant" &&
+        conversation.message?.content &&
+        Array.isArray(conversation.message.content)
+      ) {
+        for (const item of conversation.message.content) {
+          if (
+            typeof item === "object" &&
+            item !== null &&
+            "type" in item &&
+            item.type === "tool_use" &&
+            "name" in item &&
+            item.name?.startsWith("mcp__spec-workflow__") &&
+            "id" in item &&
+            item.id
+          ) {
+            specWorkflowToolUses.set(item.id, {
+              toolUse: item,
+              timestamp: conversation.timestamp,
+            });
+          }
+        }
+      }
 
-        for (const { toolResult } of toolUsages) {
-          try {
-            const parsedResult = this.parseToolResult(
-              toolResult.content,
-              conversation.timestamp,
-            );
-            if (parsedResult) {
-              results.push(parsedResult);
+      // Look for tool_result entries in user messages
+      if (
+        conversation.type === "user" &&
+        conversation.message?.content &&
+        Array.isArray(conversation.message.content)
+      ) {
+        for (const item of conversation.message.content) {
+          if (
+            typeof item === "object" &&
+            item !== null &&
+            "type" in item &&
+            item.type === "tool_result" &&
+            "tool_use_id" in item &&
+            item.tool_use_id &&
+            specWorkflowToolUses.has(item.tool_use_id)
+          ) {
+            try {
+              const toolUseInfo = specWorkflowToolUses.get(item.tool_use_id);
+              const parsedResult = this.parseToolResult(
+                item.content,
+                toolUseInfo.timestamp,
+              );
+              if (parsedResult) {
+                results.push(parsedResult);
+              }
+            } catch (error) {
+              console.warn("Failed to parse spec-workflow tool result:", error);
             }
-          } catch (error) {
-            console.warn("Failed to parse spec-workflow tool result:", error);
           }
         }
       }
@@ -118,45 +159,6 @@ export class TaskMonitoringService {
     return results.sort(
       (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
     );
-  }
-
-  /**
-   * Find spec-workflow tool usage pairs (tool_use + tool_result) in assistant message
-   */
-  private findSpecWorkflowToolUsage(
-    conversation: any,
-  ): Array<{ toolUse: any; toolResult: any }> {
-    const pairs: Array<{ toolUse: any; toolResult: any }> = [];
-
-    if (
-      !conversation.message?.content ||
-      !Array.isArray(conversation.message.content)
-    ) {
-      return pairs;
-    }
-
-    const content = conversation.message.content;
-
-    // Find tool_use entries for spec-workflow tools
-    const specWorkflowToolUses = content.filter(
-      (item: any) =>
-        item.type === "tool_use" &&
-        item.name?.startsWith("mcp__spec-workflow__"),
-    );
-
-    // Find corresponding tool_result entries
-    for (const toolUse of specWorkflowToolUses) {
-      const toolResult = content.find(
-        (item: any) =>
-          item.type === "tool_result" && item.tool_use_id === toolUse.id,
-      );
-
-      if (toolResult) {
-        pairs.push({ toolUse, toolResult });
-      }
-    }
-
-    return pairs;
   }
 
   /**

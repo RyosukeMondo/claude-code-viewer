@@ -62,6 +62,25 @@ export const taskProgressAtom = atomWithStorage<Record<string, TaskProgress>>(
 );
 
 /**
+ * Task preferences interface
+ */
+export interface TaskPreferences {
+  autoContinueSpecWorkflow: boolean;
+}
+
+const defaultTaskPreferences: TaskPreferences = {
+  autoContinueSpecWorkflow: true,
+};
+
+/**
+ * Atom for storing task preferences with localStorage persistence
+ */
+export const taskPreferencesAtom = atomWithStorage<TaskPreferences>(
+  "claude-code-viewer-task-preferences",
+  defaultTaskPreferences,
+);
+
+/**
  * Derived atom to get active task for a specific project
  */
 export const activeTaskForProjectAtom = (projectId: string) =>

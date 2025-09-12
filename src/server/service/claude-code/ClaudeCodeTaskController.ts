@@ -3,6 +3,7 @@ import { query } from "@anthropic-ai/claude-code";
 import prexit from "prexit";
 import { ulid } from "ulid";
 import { type EventBus, getEventBus } from "../events/EventBus";
+import { taskMonitoringService } from "../TaskMonitoringService";
 import { createMessageGenerator } from "./createMessageGenerator";
 import type {
   AliveClaudeCodeTask,
@@ -40,6 +41,8 @@ export class ClaudeCodeTaskController {
       cwd: string;
       projectId: string;
       sessionId?: string;
+      completionCondition?: "spec-workflow" | undefined;
+      autoContinue?: boolean;
     },
     message: string,
   ): Promise<AliveClaudeCodeTask> {
@@ -65,6 +68,8 @@ export class ClaudeCodeTaskController {
       cwd: string;
       projectId: string;
       sessionId?: string;
+      completionCondition?: "spec-workflow" | undefined;
+      autoContinue?: boolean;
     },
     message: string,
   ) {
@@ -82,6 +87,9 @@ export class ClaudeCodeTaskController {
       projectId: currentSession.projectId,
       baseSessionId: currentSession.sessionId,
       cwd: currentSession.cwd,
+      completionCondition: currentSession.completionCondition,
+      originalPrompt: message, // store original user prompt for session continuation
+      autoContinue: currentSession.autoContinue,
       generateMessages,
       setNextMessage,
       setFirstMessagePromise,
@@ -89,6 +97,10 @@ export class ClaudeCodeTaskController {
       awaitFirstMessage,
       onMessageHandlers: [],
     };
+
+    console.log(
+      `[TaskController] Creating task ${task.id} with completionCondition: ${task.completionCondition}, originalPrompt: "${task.originalPrompt}"`,
+    );
 
     let aliveTaskResolve: (task: AliveClaudeCodeTask) => void;
     let aliveTaskReject: (error: unknown) => void;
@@ -138,6 +150,9 @@ export class ClaudeCodeTaskController {
                 id: task.id,
                 projectId: task.projectId,
                 cwd: task.cwd,
+                completionCondition: task.completionCondition,
+                originalPrompt: task.originalPrompt,
+                autoContinue: task.autoContinue,
                 generateMessages: task.generateMessages,
                 setNextMessage: task.setNextMessage,
                 resolveFirstMessage: task.resolveFirstMessage,
@@ -163,12 +178,30 @@ export class ClaudeCodeTaskController {
           );
 
           if (currentTask !== undefined && message.type === "result") {
-            this.updateExistingTask({
-              ...currentTask,
-              status: "paused",
-            });
-            resolved = true;
-            setFirstMessagePromise();
+            console.log(
+              `[TaskController] Result received for task ${currentTask.id}, completionCondition: ${currentTask.completionCondition}`,
+            );
+
+            // Check if task should continue automatically based on completion condition
+            if (currentTask.completionCondition === "spec-workflow") {
+              // For spec-workflow, check if current session's workflow is complete
+              await this.handleSpecWorkflowCompletion(
+                currentTask,
+                setNextMessage,
+                setFirstMessagePromise,
+              );
+            } else {
+              // Default behavior: pause for user input
+              console.log(
+                `[TaskController] Task ${currentTask.id} pausing for user input (no completion condition)`,
+              );
+              this.updateExistingTask({
+                ...currentTask,
+                status: "paused",
+              });
+              resolved = true;
+              setFirstMessagePromise();
+            }
           }
         }
 
@@ -219,6 +252,9 @@ export class ClaudeCodeTaskController {
       sessionId: task.sessionId,
       status: "failed",
       cwd: task.cwd,
+      completionCondition: task.completionCondition,
+      originalPrompt: task.originalPrompt,
+      autoContinue: task.autoContinue,
       generateMessages: task.generateMessages,
       setNextMessage: task.setNextMessage,
       resolveFirstMessage: task.resolveFirstMessage,
@@ -228,6 +264,185 @@ export class ClaudeCodeTaskController {
       baseSessionId: task.baseSessionId,
       userMessageId: task.userMessageId,
     });
+  }
+
+  private async handleSpecWorkflowCompletion(
+    currentTask: AliveClaudeCodeTask,
+    _setNextMessage: (message: string) => void,
+    _setFirstMessagePromise: () => void,
+  ) {
+    try {
+      // Check if we have a session to monitor
+      if (!currentTask.sessionId) {
+        console.log(
+          `[TaskController] No session ID available for task ${currentTask.id}, aborting task`,
+        );
+        this.updateExistingTask({
+          ...currentTask,
+          status: "failed",
+        });
+        return;
+      }
+
+      // Get the current session and monitor for spec-workflow completion
+      const { getSession } = await import("../session/getSession");
+      const { session } = await getSession(
+        currentTask.projectId,
+        currentTask.sessionId,
+      );
+
+      // Monitor the session for spec-workflow progress
+      const taskProgress = taskMonitoringService.monitorSession(
+        session,
+        currentTask.id,
+      );
+
+      if (
+        taskProgress &&
+        taskMonitoringService.isAllTasksCompleted(taskProgress)
+      ) {
+        console.log(
+          `[TaskController] Spec-workflow completed! Task ${currentTask.id} accomplished. Stopping task.`,
+        );
+
+        // Workflow is complete, stop the task as accomplished
+        this.updateExistingTask({
+          ...currentTask,
+          status: "completed",
+        });
+        return;
+      } else {
+        console.log(
+          `[TaskController] Spec-workflow incomplete. Auto-continue: ${currentTask.autoContinue}`,
+        );
+
+        if (currentTask.autoContinue && currentTask.originalPrompt) {
+          console.log(
+            `[TaskController] Auto-continuing task ${currentTask.id} with new session`,
+          );
+
+          // Automatically start a new task with the same prompt
+          // Use setTimeout to avoid blocking the current task completion
+          setTimeout(async () => {
+            try {
+              // First, mark the current task as completed since we're continuing
+              this.updateExistingTask({
+                ...currentTask,
+                status: "completed",
+              });
+
+              console.log(
+                `[TaskController] Starting auto-continue for task ${currentTask.id}`,
+              );
+
+              const newTask = await this.startOrContinueTask(
+                {
+                  projectId: currentTask.projectId,
+                  cwd: currentTask.cwd,
+                  completionCondition: currentTask.completionCondition,
+                  autoContinue: currentTask.autoContinue,
+                },
+                currentTask.originalPrompt!,
+              );
+
+              console.log(
+                `[TaskController] Auto-continue successful: task ${newTask.id}, session: ${newTask.sessionId}`,
+              );
+
+              // Signal frontend to navigate to the new session
+              const navigationEvent = {
+                type: "navigate_to_session" as const,
+                data: {
+                  projectId: currentTask.projectId,
+                  sessionId: newTask.sessionId,
+                  userMessageId: newTask.userMessageId,
+                  reason: "auto_continue_success" as const,
+                },
+              };
+
+              console.log(
+                `[TaskController] Emitting navigate_to_session event:`,
+                navigationEvent,
+              );
+              this.eventBus.emit("navigate_to_session", navigationEvent);
+
+              // Set a fallback timeout in case navigation fails
+              setTimeout(() => {
+                const stillRunningTask = this.aliveTasks.find(
+                  (t) => t.id === newTask.id,
+                );
+                if (stillRunningTask && stillRunningTask.status === "running") {
+                  console.log(
+                    `[TaskController] Navigation fallback: task ${newTask.id} still running, ensuring it's visible`,
+                  );
+                  // Emit a secondary navigation event as fallback
+                  this.eventBus.emit("navigate_to_session", {
+                    type: "navigate_to_session" as const,
+                    data: {
+                      projectId: currentTask.projectId,
+                      sessionId: newTask.sessionId!,
+                      userMessageId: newTask.userMessageId!,
+                      reason: "auto_continue_success" as const,
+                    },
+                  });
+                }
+              }, 5000); // 5 second fallback check
+            } catch (error) {
+              console.error(`[TaskController] Auto-continue failed:`, error);
+
+              // Fallback to manual navigation
+              this.eventBus.emit("navigate_to_project", {
+                type: "navigate_to_project",
+                data: {
+                  projectId: currentTask.projectId,
+                  taskId: currentTask.id,
+                  originalPrompt: currentTask.originalPrompt,
+                  reason: "auto_continue_failed",
+                  autoContinue: false, // Force manual continuation
+                },
+              });
+            }
+          }, 2000); // Delay to ensure current session is properly closed
+
+          // Don't update task status here, let the setTimeout handle it
+          return; // Exit early to avoid setting task to paused
+        } else {
+          console.log(`[TaskController] Manual continuation required`);
+
+          // Signal the frontend to navigate to project page for manual continuation
+          this.eventBus.emit("navigate_to_project", {
+            type: "navigate_to_project",
+            data: {
+              projectId: currentTask.projectId,
+              taskId: currentTask.id,
+              originalPrompt: currentTask.originalPrompt,
+              reason: "spec_workflow_incomplete",
+              autoContinue: false,
+            },
+          });
+
+          // Keep task active but pause the current session for manual continuation
+          this.updateExistingTask({
+            ...currentTask,
+            status: "paused", // Pause current session but keep task available for continuation
+          });
+        }
+      }
+    } catch (error) {
+      console.error(
+        `[TaskController] Error handling spec-workflow completion:`,
+        error,
+      );
+
+      // No fallback - abort task on error
+      console.log(
+        `[TaskController] Aborting task ${currentTask.id} due to error`,
+      );
+      this.updateExistingTask({
+        ...currentTask,
+        status: "failed",
+      });
+    }
   }
 
   private updateExistingTask(task: ClaudeCodeTask) {

@@ -26,13 +26,21 @@ export const useStartTaskMutation = (
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (options: { prompt: string }) => {
-      const response = await honoClient.api.projects[":projectId"][
-        "new-session"
-      ].$post(
+    mutationFn: async (options: {
+      prompt: string;
+      completionCondition?: "spec-workflow";
+      autoContinue?: boolean;
+    }) => {
+      const response = await honoClient.api.projects[
+        ":projectId"
+      ].tasks.start.$post(
         {
           param: { projectId },
-          json: { message: options.prompt },
+          json: {
+            prompt: options.prompt,
+            completionCondition: options.completionCondition || "spec-workflow",
+            autoContinue: options.autoContinue ?? true,
+          },
         },
         {
           init: {
@@ -64,13 +72,21 @@ export const useResumeTaskMutation = (
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (options: { prompt: string }) => {
-      const response = await honoClient.api.projects[":projectId"].sessions[
+    mutationFn: async (options: {
+      prompt: string;
+      completionCondition?: "spec-workflow";
+      autoContinue?: boolean;
+    }) => {
+      const response = await honoClient.api.projects[":projectId"].tasks[
         ":sessionId"
-      ].resume.$post(
+      ].continue.$post(
         {
           param: { projectId, sessionId },
-          json: { resumeMessage: options.prompt },
+          json: {
+            prompt: options.prompt,
+            completionCondition: options.completionCondition || "spec-workflow",
+            autoContinue: options.autoContinue ?? true,
+          },
         },
         {
           init: {

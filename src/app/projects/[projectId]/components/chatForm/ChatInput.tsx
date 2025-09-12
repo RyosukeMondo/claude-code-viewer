@@ -17,6 +17,7 @@ export interface ChatInputProps {
   containerClassName?: string;
   disabled?: boolean;
   buttonSize?: "sm" | "default" | "lg";
+  initialValue?: string;
 }
 
 export const ChatInput: FC<ChatInputProps> = ({
@@ -30,8 +31,9 @@ export const ChatInput: FC<ChatInputProps> = ({
   containerClassName = "",
   disabled = false,
   buttonSize = "lg",
+  initialValue = "",
 }) => {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialValue);
   const [cursorPosition, setCursorPosition] = useState<{
     relative: { top: number; left: number };
     absolute: { top: number; left: number };

@@ -31,6 +31,7 @@ import { projectQueryConfig, useProject } from "../hooks/useProject";
 import { firstCommandToTitle } from "../services/firstCommandToTitle";
 import { NewChatModal } from "./newChat/NewChatModal";
 import { NewTaskModal } from "./newTask/NewTaskModal";
+import { ActiveTasksList } from "./taskStatus/ActiveTasksList";
 
 export const ProjectPageContent = ({ projectId }: { projectId: string }) => {
   const {
@@ -98,6 +99,11 @@ export const ProjectPageContent = ({ projectId }: { projectId: string }) => {
       </header>
 
       <main>
+        {/* Active Tasks Section */}
+        <section className="mb-8">
+          <ActiveTasksList projectId={projectId} />
+        </section>
+
         <section>
           <h2 className="text-lg sm:text-xl font-semibold mb-4">
             Conversation Sessions{" "}

@@ -1,14 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import {
-  ExternalLinkIcon,
-  GitCompareIcon,
-  LoaderIcon,
-  MenuIcon,
-  PauseIcon,
-  XIcon,
-} from "lucide-react";
+import { ExternalLinkIcon, GitCompareIcon, MenuIcon } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -16,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { Badge } from "../../../../../../components/ui/badge";
 import { honoClient } from "../../../../../../lib/api/client";
+import { TaskStatusBanner } from "../../../components/taskStatus/TaskStatusBanner";
 import { useProject } from "../../../hooks/useProject";
 import { firstCommandToTitle } from "../../../services/firstCommandToTitle";
 import { useAliveTask } from "../hooks/useAliveTask";
@@ -130,47 +124,14 @@ export const SessionPageContent: FC<{
               </Badge>
             </div>
 
-            {isRunningTask && (
-              <div className="flex items-center gap-1 sm:gap-2 p-1 bg-primary/10 border border-primary/20 rounded-lg mx-1 sm:mx-5">
-                <LoaderIcon className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-                <div className="flex-1">
-                  <p className="text-xs sm:text-sm font-medium">
-                    Conversation is in progress...
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    abortTask.mutate(sessionId);
-                  }}
-                >
-                  <XIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Abort</span>
-                </Button>
-              </div>
-            )}
-
-            {isPausedTask && (
-              <div className="flex items-center gap-1 sm:gap-2 p-1 bg-primary/10 border border-primary/20 rounded-lg mx-1 sm:mx-5">
-                <PauseIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                <div className="flex-1">
-                  <p className="text-xs sm:text-sm font-medium">
-                    Conversation is paused...
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    abortTask.mutate(sessionId);
-                  }}
-                >
-                  <XIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Abort</span>
-                </Button>
-              </div>
-            )}
+            <div className="px-1 sm:px-5">
+              <TaskStatusBanner
+                sessionId={sessionId}
+                isRunningTask={isRunningTask}
+                isPausedTask={isPausedTask}
+                onAbort={() => abortTask.mutate(sessionId)}
+              />
+            </div>
           </div>
         </header>
 

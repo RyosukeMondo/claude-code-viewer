@@ -61,6 +61,14 @@ export type SSEEvent = BaseSSEEvent &
         type: "task_automation_error";
         data: TaskAutomationErrorData;
       }
+    | {
+        type: "navigate_to_project";
+        data: NavigateToProjectData;
+      }
+    | {
+        type: "navigate_to_session";
+        data: NavigateToSessionData;
+      }
   );
 
 export interface ProjectChangedData {
@@ -105,4 +113,19 @@ export interface TaskAutomationErrorData {
   sessionId: string;
   error: AutomationError;
   retryCount: number;
+}
+
+export interface NavigateToProjectData {
+  projectId: string;
+  taskId: string;
+  originalPrompt?: string;
+  reason: "spec_workflow_incomplete" | "auto_continue_failed";
+  autoContinue?: boolean;
+}
+
+export interface NavigateToSessionData {
+  projectId: string;
+  sessionId: string;
+  userMessageId: string;
+  reason: "auto_continue_success";
 }

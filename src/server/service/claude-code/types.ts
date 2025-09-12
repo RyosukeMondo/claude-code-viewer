@@ -5,6 +5,9 @@ type BaseClaudeCodeTask = {
   projectId: string;
   baseSessionId?: string | undefined; // undefined = new session
   cwd: string;
+  completionCondition?: "spec-workflow" | undefined; // completion condition for automatic continuation
+  originalPrompt?: string; // store original user prompt for session continuation
+  autoContinue?: boolean; // whether to automatically continue when workflow is incomplete
   generateMessages: MessageGenerator;
   setNextMessage: (message: string) => void;
   resolveFirstMessage: () => void;
@@ -56,5 +59,11 @@ export type AliveClaudeCodeTask = RunningClaudeCodeTask | PausedClaudeCodeTask;
 
 export type SerializableAliveTask = Pick<
   AliveClaudeCodeTask,
-  "id" | "status" | "sessionId" | "userMessageId"
+  | "id"
+  | "status"
+  | "sessionId"
+  | "userMessageId"
+  | "completionCondition"
+  | "originalPrompt"
+  | "autoContinue"
 >;

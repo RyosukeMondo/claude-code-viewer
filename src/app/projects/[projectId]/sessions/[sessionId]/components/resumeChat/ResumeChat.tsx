@@ -1,8 +1,6 @@
 import type { FC } from "react";
-import {
-  ChatInput,
-  useResumeChatMutation,
-} from "../../../../components/chatForm";
+import { ChatInput } from "../../../../components/chatForm";
+import { useResumeTaskMutation } from "../../../../components/newTask/useTaskMutations";
 
 export const ResumeChat: FC<{
   projectId: string;
@@ -10,10 +8,13 @@ export const ResumeChat: FC<{
   isPausedTask: boolean;
   isRunningTask: boolean;
 }> = ({ projectId, sessionId, isPausedTask, isRunningTask }) => {
-  const resumeChat = useResumeChatMutation(projectId, sessionId);
+  const resumeChat = useResumeTaskMutation(projectId, sessionId);
 
   const handleSubmit = async (message: string) => {
-    await resumeChat.mutateAsync({ message });
+    await resumeChat.mutateAsync({
+      prompt: message,
+      completionCondition: "spec-workflow",
+    });
   };
 
   const getButtonText = () => {
