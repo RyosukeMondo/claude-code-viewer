@@ -18,9 +18,11 @@ export const useAliveTask = (sessionId: string) => {
 
       const data = await response.json();
       setAliveTasks(data.aliveTasks);
-      return response.json();
+      return data;
     },
+    refetchInterval: 2000, // Refetch every 2 seconds to catch status changes
     refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 
   const taskInfo = useMemo(() => {

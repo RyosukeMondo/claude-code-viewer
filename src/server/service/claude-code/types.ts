@@ -8,6 +8,7 @@ type BaseClaudeCodeTask = {
   completionCondition?: "spec-workflow" | undefined; // completion condition for automatic continuation
   originalPrompt?: string; // store original user prompt for session continuation
   autoContinue?: boolean; // whether to automatically continue when workflow is incomplete
+  lastActivity: number; // timestamp of last message activity
   generateMessages: MessageGenerator;
   setNextMessage: (message: string) => void;
   resolveFirstMessage: () => void;
@@ -66,6 +67,7 @@ export type SerializableAliveTask = Pick<
   | "completionCondition"
   | "originalPrompt"
   | "autoContinue"
+  | "lastActivity"
 >;
 
 export type TaskSessionConfig = {

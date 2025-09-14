@@ -353,6 +353,53 @@ export const routes = (app: HonoAppType) => {
       )
 
       .get("/tasks/alive", async (c) => {
+        const now = Date.now();
+        const timeoutMs = 120 * 1000; // 120 seconds (2 minutes)
+
+        // Check for timed-out tasks and trigger auto-continuation
+        for (const task of taskController.aliveTasks) {
+          const inactivityMs = now - task.lastActivity;
+          const isTimedOut = inactivityMs > timeoutMs;
+
+          if (isTimedOut && task.status === "running") {
+            console.log(
+              `[TaskAPI] Task ${task.id} timed out (${Math.round(inactivityMs / 1000)}s since last activity)`,
+            );
+
+            // If task should auto-continue, start a new session
+            if (task.autoContinue && task.originalPrompt) {
+              console.log(
+                `[TaskAPI] Auto-continuing task ${task.id} with new session`,
+              );
+
+              try {
+                // Start a new task with the same configuration
+                const newTask = await taskController.startOrContinueTask(
+                  {
+                    cwd: task.cwd,
+                    projectId: task.projectId,
+                    completionCondition: task.completionCondition,
+                    autoContinue: task.autoContinue,
+                  },
+                  task.originalPrompt,
+                );
+
+                console.log(
+                  `[TaskAPI] New task ${newTask.id} started to continue workflow`,
+                );
+
+                // Complete the old task
+                taskController.abortTask(task.sessionId);
+              } catch (error) {
+                console.error(
+                  `[TaskAPI] Failed to auto-continue task ${task.id}:`,
+                  error,
+                );
+              }
+            }
+          }
+        }
+
         return c.json({
           aliveTasks: taskController.aliveTasks.map(
             (task): SerializableAliveTask => ({
@@ -363,6 +410,7 @@ export const routes = (app: HonoAppType) => {
               completionCondition: task.completionCondition,
               originalPrompt: task.originalPrompt,
               autoContinue: task.autoContinue,
+              lastActivity: task.lastActivity,
             }),
           ),
         });

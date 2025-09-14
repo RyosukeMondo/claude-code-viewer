@@ -3,16 +3,17 @@ import { query } from "@anthropic-ai/claude-code";
 import prexit from "prexit";
 import { ulid } from "ulid";
 import { type EventBus, getEventBus } from "../events/EventBus";
+import { ClaudeCodeStateDetector } from "./ClaudeCodeStateDetector";
 import { createMessageGenerator } from "./createMessageGenerator";
-import { SessionContinuationHandler } from "./SessionContinuationHandler";
-import { SpecWorkflowHandler } from "./SpecWorkflowHandler";
 import { TaskLifecycleService } from "./TaskLifecycleService";
+import { TaskStateOrchestrator } from "./TaskStateOrchestrator";
 import type {
   AliveClaudeCodeTask,
   PendingClaudeCodeTask,
   RunningClaudeCodeTask,
   TaskSessionConfig,
 } from "./types";
+import { WorkflowCompletionDetector } from "./WorkflowCompletionDetector";
 
 /**
  * Main controller for Claude Code task management.
@@ -27,17 +28,17 @@ export class ClaudeCodeTaskController {
   private readonly pathToClaudeCodeExecutable: string;
   private readonly eventBus: EventBus;
   private readonly taskLifecycle: TaskLifecycleService;
-  private readonly continuationHandler: SessionContinuationHandler;
-  private readonly specWorkflowHandler: SpecWorkflowHandler;
+  private readonly stateDetector: ClaudeCodeStateDetector;
+  private readonly workflowDetector: WorkflowCompletionDetector;
+  private readonly orchestrator: TaskStateOrchestrator;
 
   constructor() {
     this.pathToClaudeCodeExecutable = this.getClaudeExecutablePath();
     this.eventBus = getEventBus();
     this.taskLifecycle = new TaskLifecycleService(this.eventBus);
-    this.continuationHandler = new SessionContinuationHandler(this.eventBus);
-    this.specWorkflowHandler = new SpecWorkflowHandler(
-      this.continuationHandler,
-    );
+    this.stateDetector = new ClaudeCodeStateDetector();
+    this.workflowDetector = new WorkflowCompletionDetector();
+    this.orchestrator = new TaskStateOrchestrator();
 
     this.setupCleanupHandlers();
   }
@@ -124,6 +125,7 @@ export class ClaudeCodeTaskController {
       completionCondition: sessionConfig.completionCondition,
       originalPrompt: message,
       autoContinue: sessionConfig.autoContinue,
+      lastActivity: Date.now(), // Initialize with current timestamp
       onMessageHandlers: [],
       ...messageGenerator,
     };
@@ -140,10 +142,14 @@ export class ClaudeCodeTaskController {
           const abortController = new AbortController();
           let currentTask: AliveClaudeCodeTask | undefined;
 
+          let lastMessage: any = null;
+          let finalDecision: { wasExecuted: boolean } | null = null;
+
           for await (const message of this.queryClaudeCode(
             pendingTask,
             abortController,
           )) {
+            lastMessage = message;
             currentTask = this.updateTaskFromMessage(
               pendingTask,
               message,
@@ -157,11 +163,48 @@ export class ClaudeCodeTaskController {
               pendingTask.resolveFirstMessage();
             }
 
+            // Update activity timestamp for any message
+            if (currentTask) {
+              currentTask.lastActivity = Date.now();
+            }
+
             await this.processMessage(pendingTask, message);
-            await this.handleTaskCompletion(currentTask, message);
+
+            // Use new state-driven decision making
+            finalDecision = await this.handleTaskStateDecision(
+              currentTask,
+              message,
+              false, // isLastMessage
+            );
+
+            console.log(
+              `[TaskController] Message processed, finalDecision.wasExecuted: ${finalDecision?.wasExecuted}`,
+            );
           }
 
-          this.completeTaskExecution(currentTask);
+          console.log(
+            `[TaskController] For loop completed, handling stream end`,
+          );
+
+          // Handle final stream end decision if no decision was made
+          console.log(
+            `[TaskController] Stream ended. finalDecision?.wasExecuted: ${finalDecision?.wasExecuted}, currentTask: ${currentTask?.id}`,
+          );
+
+          if (currentTask && !finalDecision?.wasExecuted) {
+            console.log(
+              `[TaskController] Handling stream end for task ${currentTask.id}`,
+            );
+            await this.handleTaskStateDecision(
+              currentTask,
+              lastMessage,
+              true, // isLastMessage
+            );
+          } else if (currentTask && finalDecision?.wasExecuted) {
+            console.log(
+              `[TaskController] Skipping stream end - decision already executed for task ${currentTask.id}`,
+            );
+          }
         } catch (error) {
           this.handleExecutionError(pendingTask, error, resolved, reject);
         }
@@ -204,6 +247,7 @@ export class ClaudeCodeTaskController {
         completionCondition: pendingTask.completionCondition,
         originalPrompt: pendingTask.originalPrompt,
         autoContinue: pendingTask.autoContinue,
+        lastActivity: Date.now(), // Update activity timestamp
         generateMessages: pendingTask.generateMessages,
         setNextMessage: pendingTask.setNextMessage,
         resolveFirstMessage: pendingTask.resolveFirstMessage,
@@ -230,48 +274,104 @@ export class ClaudeCodeTaskController {
     );
   }
 
-  private async handleTaskCompletion(
+  /**
+   * New state-driven task decision handling.
+   * 1. Detect Claude state 2. Analyze workflow 3. Decide action 4. Execute
+   */
+  private async handleTaskStateDecision(
     currentTask: AliveClaudeCodeTask | undefined,
     message: any,
-  ): Promise<void> {
-    if (currentTask && message.type === "result") {
-      console.log(
-        `[TaskController] Result received for task ${currentTask.id}, completionCondition: ${currentTask.completionCondition}`,
-      );
-
-      if (currentTask.completionCondition === "spec-workflow") {
-        await this.handleSpecWorkflowTask(currentTask);
-      } else {
-        this.handleDefaultTask(currentTask);
-      }
+    isLastMessage: boolean,
+  ) {
+    if (!currentTask) {
+      return { wasExecuted: false };
     }
-  }
 
-  private async handleSpecWorkflowTask(
-    currentTask: AliveClaudeCodeTask,
-  ): Promise<void> {
-    await this.specWorkflowHandler.handleCompletion(
-      currentTask,
-      (config, message) => this.startNewTask(config, message),
-      (taskId) => this.taskLifecycle.completeTask(taskId),
-      (taskId) => this.taskLifecycle.pauseTask(taskId),
-    );
-  }
+    // Step 1: Detect Claude Code state
+    const claudeState = this.stateDetector.detectState({
+      lastMessage: message,
+      isStreamActive: !isLastMessage,
+      isLastMessage,
+      messageType: message?.type,
+      lastActivity: currentTask.lastActivity,
+    });
 
-  private handleDefaultTask(currentTask: AliveClaudeCodeTask): void {
     console.log(
-      `[TaskController] Task ${currentTask.id} pausing for user input (no completion condition)`,
+      `[TaskController] Claude state: ${claudeState}, Task: ${currentTask.id}`,
     );
 
-    this.taskLifecycle.pauseTask(currentTask.id);
-    currentTask.setFirstMessagePromise();
+    // Step 2: Analyze workflow status (if applicable)
+    const workflowStatus = await this.workflowDetector.detectWorkflowStatus({
+      task: currentTask,
+      claudeState,
+    });
+
+    // Step 3: Decide action based on states
+    const decision = this.orchestrator.decideTaskAction({
+      claudeState,
+      workflowStatus,
+      task: currentTask,
+      canAutoContinue: this.orchestrator.canTaskAutoContinue(currentTask),
+    });
+
+    console.log(
+      `[TaskController] Decision for task ${currentTask.id}: ${decision.action} (${decision.reason})`,
+    );
+
+    // Step 4: Execute decision
+    if (decision.shouldExecute) {
+      await this.executeTaskAction(
+        currentTask,
+        decision.action,
+        decision.reason,
+      );
+      return { wasExecuted: true };
+    }
+
+    return { wasExecuted: false };
   }
 
-  private completeTaskExecution(
-    currentTask: AliveClaudeCodeTask | undefined,
-  ): void {
-    if (currentTask) {
-      this.taskLifecycle.completeTask(currentTask.id);
+  /**
+   * Execute the decided task action
+   */
+  private async executeTaskAction(
+    task: AliveClaudeCodeTask,
+    action: "continue" | "pause" | "complete" | "restart",
+    reason: string,
+  ): Promise<void> {
+    switch (action) {
+      case "continue":
+        // No action needed, continue processing
+        break;
+
+      case "pause":
+        console.log(`[TaskController] Pausing task ${task.id}: ${reason}`);
+        this.taskLifecycle.pauseTask(task.id);
+        task.setFirstMessagePromise();
+        break;
+
+      case "complete":
+        console.log(`[TaskController] Completing task ${task.id}: ${reason}`);
+        this.taskLifecycle.completeTask(task.id);
+        break;
+
+      case "restart":
+        console.log(`[TaskController] Restarting task ${task.id}: ${reason}`);
+        // Complete current task and start new one
+        this.taskLifecycle.completeTask(task.id);
+        await this.startNewTask(
+          {
+            projectId: task.projectId,
+            cwd: task.cwd,
+            completionCondition: task.completionCondition,
+            autoContinue: task.autoContinue,
+          },
+          task.originalPrompt || "Continue previous task",
+        );
+        break;
+
+      default:
+        console.warn(`[TaskController] Unknown action: ${action}`);
     }
   }
 
