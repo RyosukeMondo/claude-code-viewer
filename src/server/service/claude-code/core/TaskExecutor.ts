@@ -1,22 +1,57 @@
-import { execSync } from "node:child_process";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
 import { query } from "@anthropic-ai/claude-code";
 import { createMessageGenerator } from "../createMessageGenerator";
 import type { StateDetector } from "../detection/StateDetector";
 import type { TaskLifecycleService } from "../TaskLifecycleService";
 import type { AliveTask, PendingTask, RunningTask } from "./task-types";
 
+const execAsync = promisify(exec);
+
+interface ClaudeCodeMessage {
+  type: string;
+  uuid?: string;
+  session_id?: string;
+  content?: unknown;
+}
+
+interface TaskSession {
+  id: string;
+  projectId: string;
+  cwd: string;
+  completionCondition?: string;
+  originalPrompt?: string;
+  autoContinue: boolean;
+  baseSessionId?: string;
+  generateMessages: () => string;
+  abortController: AbortController;
+  setNextMessage: (message: string) => void;
+  setFirstMessagePromise: () => void;
+  resolveFirstMessage: any;
+}
+
 /**
  * Pure task execution logic following SLAP.
  * Single responsibility: Execute tasks and process message streams.
  */
 export class TaskExecutor {
-  private readonly claudeExecutablePath: string;
+  private claudeExecutablePath: string | null = null;
 
   constructor(
     private readonly lifecycle: TaskLifecycleService,
     private readonly stateDetector: StateDetector,
   ) {
-    this.claudeExecutablePath = execSync("which claude", {}).toString().trim();
+    this.initializeClaudePath();
+  }
+
+  private async initializeClaudePath(): Promise<void> {
+    try {
+      const { stdout } = await execAsync("which claude");
+      this.claudeExecutablePath = stdout.trim();
+    } catch (error) {
+      console.error("[TaskExecutor] Failed to find claude executable:", error);
+      throw new Error("Claude executable not found in PATH");
+    }
   }
 
   /**
@@ -39,7 +74,7 @@ export class TaskExecutor {
     void messageGenerator; // Suppress unused variable warning
   }
 
-  private createTaskSession(task: PendingTask) {
+  private createTaskSession(task: PendingTask): TaskSession {
     const messageGenerator = createMessageGenerator(task.originalPrompt || "");
 
     return {
@@ -49,12 +84,9 @@ export class TaskExecutor {
     };
   }
 
-  private async processMessageStream(taskSession: {
-    generateMessages: () => string;
-    baseSessionId?: string;
-    cwd: string;
-    abortController: AbortController;
-  }): Promise<AliveTask> {
+  private async processMessageStream(
+    taskSession: TaskSession,
+  ): Promise<AliveTask> {
     return new Promise((resolve, reject) => {
       let resolved = false;
 
@@ -87,12 +119,10 @@ export class TaskExecutor {
     });
   }
 
-  private queryClaudeCode(taskSession: {
-    generateMessages: () => string;
-    baseSessionId?: string;
-    cwd: string;
-    abortController: AbortController;
-  }) {
+  private queryClaudeCode(taskSession: TaskSession) {
+    if (!this.claudeExecutablePath) {
+      throw new Error("Claude executable path not initialized");
+    }
     return query({
       prompt: taskSession.generateMessages(),
       options: {
@@ -106,12 +136,13 @@ export class TaskExecutor {
   }
 
   private updateTaskFromMessage(
-    taskSession: unknown,
-    message: unknown,
+    taskSession: TaskSession,
+    message: ClaudeCodeMessage,
   ): AliveTask | undefined {
     if (
       (message.type === "user" || message.type === "assistant") &&
-      message.uuid
+      message.uuid &&
+      message.session_id
     ) {
       const runningTask: RunningTask = {
         status: "running",
@@ -136,18 +167,23 @@ export class TaskExecutor {
 
   private async handleMessage(
     task: AliveTask | undefined,
-    message: any,
+    message: ClaudeCodeMessage,
   ): Promise<void> {
     if (!task) return;
 
-    // Update activity timestamp
-    (task as any).lastActivity = Date.now();
+    // Update activity timestamp safely
+    if ("lastActivity" in task) {
+      (task as RunningTask).lastActivity = Date.now();
+    }
 
     // Detect state and handle accordingly
     const claudeState = this.stateDetector.detectState({
       message,
       isLastMessage: false,
-      lastActivity: task.lastActivity,
+      lastActivity:
+        task.status === "running"
+          ? (task as RunningTask).lastActivity
+          : Date.now(),
     });
 
     // Process state-specific logic
@@ -162,7 +198,7 @@ export class TaskExecutor {
   }
 
   private handleExecutionError(
-    taskSession: any,
+    taskSession: TaskSession,
     error: unknown,
     resolved: boolean,
     reject: (error: unknown) => void,
