@@ -6,9 +6,17 @@
 export type ClaudeState = "running" | "idle" | "error";
 
 export interface StateContext {
-  readonly message: any;
+  readonly message: ClaudeCodeMessage | null;
   readonly isLastMessage: boolean;
   readonly lastActivity?: number;
+}
+
+export interface ClaudeCodeMessage {
+  readonly type: string;
+  readonly uuid?: string;
+  readonly session_id?: string;
+  readonly content?: unknown;
+  readonly error?: string;
 }
 
 /**
@@ -36,11 +44,14 @@ export class StateDetector {
     return this.detectActivity(context);
   }
 
-  private hasError(message: any): boolean {
+  private hasError(message: ClaudeCodeMessage | null): boolean {
+    if (!message) return false;
     return Boolean(
-      message?.type === "error" ||
-        message?.error ||
-        (message?.type === "system" && message?.content?.includes("error")),
+      message.type === "error" ||
+        message.error ||
+        (message.type === "system" &&
+          typeof message.content === "string" &&
+          message.content.includes("error")),
     );
   }
 
@@ -56,14 +67,17 @@ export class StateDetector {
     // Simple activity rules - much cleaner than nested conditionals
     const ActivityRules = {
       // Tool usage always indicates active processing
-      isToolActivity: () => ["tool_use", "tool_result"].includes(messageType),
+      isToolActivity: () =>
+        messageType ? ["tool_use", "tool_result"].includes(messageType) : false,
 
       // Last assistant message means Claude finished (idle)
       isFinishedResponse: () => isLastMessage && messageType === "assistant",
 
       // Non-last messages indicate ongoing activity
       isOngoingActivity: () =>
-        !isLastMessage && ["user", "assistant"].includes(messageType),
+        !isLastMessage && messageType
+          ? ["user", "assistant"].includes(messageType)
+          : false,
     };
 
     if (ActivityRules.isToolActivity()) return "running";

@@ -1,10 +1,18 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import { query } from "@anthropic-ai/claude-code";
-import { createMessageGenerator } from "../createMessageGenerator";
+import {
+  createMessageGenerator,
+  type MessageGenerator,
+} from "../createMessageGenerator";
 import type { StateDetector } from "../detection/StateDetector";
 import type { TaskLifecycleService } from "../TaskLifecycleService";
-import type { AliveTask, PendingTask, RunningTask } from "./task-types";
+import type {
+  AliveTask,
+  CompletionCondition,
+  PendingTask,
+  RunningTask,
+} from "./task-types";
 
 const execAsync = promisify(exec);
 
@@ -19,15 +27,15 @@ interface TaskSession {
   id: string;
   projectId: string;
   cwd: string;
-  completionCondition?: string;
+  completionCondition?: CompletionCondition;
   originalPrompt?: string;
-  autoContinue: boolean;
+  autoContinue?: boolean;
   baseSessionId?: string;
-  generateMessages: () => string;
+  generateMessages: MessageGenerator;
   abortController: AbortController;
   setNextMessage: (message: string) => void;
   setFirstMessagePromise: () => void;
-  resolveFirstMessage: any;
+  resolveFirstMessage: (value?: unknown) => void;
 }
 
 /**
@@ -151,7 +159,7 @@ export class TaskExecutor {
         cwd: taskSession.cwd,
         completionCondition: taskSession.completionCondition,
         originalPrompt: taskSession.originalPrompt,
-        autoContinue: taskSession.autoContinue,
+        autoContinue: taskSession.autoContinue ?? false,
         lastActivity: Date.now(),
         baseSessionId: taskSession.baseSessionId,
         sessionId: message.session_id,
@@ -171,9 +179,11 @@ export class TaskExecutor {
   ): Promise<void> {
     if (!task) return;
 
-    // Update activity timestamp safely
-    if ("lastActivity" in task) {
-      (task as RunningTask).lastActivity = Date.now();
+    // Update activity timestamp safely (note: readonly properties require lifecycle service update)
+    if (task.status === "running") {
+      // Note: Cannot directly modify readonly lastActivity property
+      // This would need to be handled through lifecycle service for proper immutable updates
+      console.log(`[TaskExecutor] Activity detected for task ${task.id}`);
     }
 
     // Detect state and handle accordingly

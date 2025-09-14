@@ -99,7 +99,8 @@ export class DecisionEngine {
             ),
     };
 
-    const decisionFn = IdleDecisions[workflowStatus];
+    const decisionFn =
+      IdleDecisions[workflowStatus as keyof typeof IdleDecisions];
     return decisionFn
       ? decisionFn()
       : this.createDecision("pause", "Claude idle, awaiting user input", true);

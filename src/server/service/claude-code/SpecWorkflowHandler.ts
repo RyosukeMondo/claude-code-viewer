@@ -1,3 +1,4 @@
+import type { TaskProgress } from "../TaskMonitoringService";
 import { taskMonitoringService } from "../TaskMonitoringService";
 import type { SessionContinuationHandler } from "./SessionContinuationHandler";
 import type { AliveClaudeCodeTask, TaskSessionConfig } from "./types";
@@ -69,7 +70,9 @@ export class SpecWorkflowHandler {
   }
 
   private isWorkflowCompleted(taskProgress: unknown): boolean {
-    return taskMonitoringService.isAllTasksCompleted(taskProgress);
+    return taskMonitoringService.isAllTasksCompleted(
+      taskProgress as TaskProgress,
+    );
   }
 
   private async handleWorkflowCompleted(

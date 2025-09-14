@@ -39,7 +39,7 @@ export class TaskStateDecisionEngine {
    */
   public decideTaskAction(context: TaskDecisionContext): TaskStateDecision {
     // Handle result messages during the stream
-    if (context.message.type === "result" && context.currentTask) {
+    if (context.message?.type === "result" && context.currentTask) {
       return this.handleResultMessage(context);
     }
 

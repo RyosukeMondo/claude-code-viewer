@@ -87,7 +87,7 @@ export class AutomationController {
       // Create active task entry
       const activeTask: ActiveTask = {
         taskConfig,
-        claudeCodeTask,
+        claudeCodeTask: claudeCodeTask as AliveClaudeCodeTask,
         status: "running",
         startTime: new Date(),
         retryCount: 0,

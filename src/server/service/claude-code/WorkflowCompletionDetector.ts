@@ -1,3 +1,4 @@
+import type { TaskProgress } from "../TaskMonitoringService";
 import { taskMonitoringService } from "../TaskMonitoringService";
 import type { AliveClaudeCodeTask } from "./types";
 
@@ -56,6 +57,8 @@ export class WorkflowCompletionDetector {
   }
 
   private isWorkflowCompleted(taskProgress: unknown): boolean {
-    return taskMonitoringService.isAllTasksCompleted(taskProgress);
+    return taskMonitoringService.isAllTasksCompleted(
+      taskProgress as TaskProgress,
+    );
   }
 }

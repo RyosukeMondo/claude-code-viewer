@@ -155,6 +155,7 @@ export class TaskMonitoringService {
           ) {
             try {
               const toolUseInfo = specWorkflowToolUses.get(item.tool_use_id);
+              if (!toolUseInfo) continue;
               const parsedResult = this.parseToolResult(
                 item.content,
                 toolUseInfo.timestamp,
@@ -198,8 +199,16 @@ export class TaskMonitoringService {
     if (typeof content === "string") {
       jsonContent = content;
     } else if (Array.isArray(content)) {
-      const textContent = content.find((item) => item.type === "text");
-      jsonContent = textContent?.text || "";
+      const textContent = content.find(
+        (item: unknown) =>
+          item &&
+          typeof item === "object" &&
+          item !== null &&
+          "type" in item &&
+          item.type === "text" &&
+          "text" in item,
+      );
+      jsonContent = (textContent as { text: string })?.text || "";
     } else {
       console.log(
         "[TaskMonitoringService] Skipping non-string tool result content",
@@ -266,9 +275,10 @@ export class TaskMonitoringService {
         throw new Error("Task progress data is missing or invalid");
       }
 
+      const progressObj = progress as Record<string, unknown>;
       if (
-        typeof progress.totalTasks !== "number" ||
-        typeof progress.completedTasks !== "number"
+        typeof progressObj["totalTasks"] !== "number" ||
+        typeof progressObj["completedTasks"] !== "number"
       ) {
         throw new Error(
           "Task progress must contain totalTasks and completedTasks as numbers",
@@ -294,7 +304,7 @@ export class TaskMonitoringService {
   private inferActionFromData(data: unknown): string {
     if (typeof data === "object" && data !== null) {
       const dataObj = data as Record<string, unknown>;
-      const dataField = dataObj.data as Record<string, unknown> | undefined;
+      const dataField = dataObj["data"] as Record<string, unknown> | undefined;
 
       if (dataField && "nextTask" in dataField) return "next-pending";
       if (dataField && "taskId" in dataField && "previousStatus" in dataField)

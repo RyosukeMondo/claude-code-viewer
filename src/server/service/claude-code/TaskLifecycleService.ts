@@ -1,5 +1,10 @@
 import type { EventBus } from "../events/EventBus";
-import { type AliveTask, type Task, TaskGuards } from "./core/task-types";
+import {
+  type AliveTask,
+  type CompletedTask,
+  type Task,
+  TaskGuards,
+} from "./core/task-types";
 
 /**
  * Manages task lifecycle states and transitions.
@@ -58,14 +63,14 @@ export class TaskLifecycleService {
 
     // For completed tasks, we need sessionId and userMessageId
     if (task.status === "running" || task.status === "paused") {
-      this.updateTask({
+      // Create a proper completed task without the properties that don't exist on CompletedTask
+      const completedTask: CompletedTask = {
         ...task,
         status: "completed",
         sessionId: task.sessionId,
         userMessageId: task.userMessageId,
-        abortController: task.abortController,
-        resolveFirstMessage: task.resolveFirstMessage,
-      });
+      };
+      this.updateTask(completedTask);
     } else {
       throw new Error(
         `Cannot complete task ${taskId} with status ${task.status}`,

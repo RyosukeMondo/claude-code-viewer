@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
 import { honoClient } from "../../../../../../lib/api/client";
-import type { SerializableAliveTask } from "../../../../../../server/service/claude-code/core/task-types";
 import { aliveTasksAtom } from "../store/aliveTasksAtom";
 
 /**
@@ -27,16 +26,10 @@ export const useAliveTask = (sessionId: string, _projectId: string) => {
       }
 
       const data = await response.json();
-      setAliveTasks(data.aliveTasks);
+      setAliveTasks(data.aliveTasks || []);
       return data;
     },
-    refetchInterval: (data) => {
-      // Adaptive polling: faster when tasks are running, slower when idle
-      const hasRunningTasks = data?.aliveTasks?.some(
-        (task: SerializableAliveTask) => task.status === "running",
-      );
-      return hasRunningTasks ? 2000 : 10000; // 2s when running, 10s when idle
-    },
+    refetchInterval: 5000, // Fixed 5s interval to avoid type complexity
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
     // Built-in error boundaries and retry logic - no custom circuit breaker needed

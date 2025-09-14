@@ -50,12 +50,13 @@ export class ClaudeCodeStateDetector {
   }
 
   private hasError(context: ClaudeStateContext): boolean {
-    return (
+    return Boolean(
       context.lastMessage?.type === "error" ||
-      context.lastMessage?.error ||
-      (context.isLastMessage &&
-        context.lastMessage?.type === "system" &&
-        context.lastMessage?.content?.includes("error"))
+        context.lastMessage?.error ||
+        (context.isLastMessage &&
+          context.lastMessage?.type === "system" &&
+          typeof context.lastMessage?.content === "string" &&
+          context.lastMessage.content.includes("error")),
     );
   }
 
