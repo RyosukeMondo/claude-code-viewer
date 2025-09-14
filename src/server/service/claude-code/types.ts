@@ -67,3 +67,11 @@ export type SerializableAliveTask = Pick<
   | "originalPrompt"
   | "autoContinue"
 >;
+
+export type TaskSessionConfig = {
+  cwd: string;
+  projectId: string;
+  sessionId?: string;
+  completionCondition?: "spec-workflow" | undefined;
+  autoContinue?: boolean;
+};

@@ -53,6 +53,15 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
     await onConfigChanged();
   };
 
+  const handlePreventAutoScrollChange = async () => {
+    const newConfig = {
+      ...config,
+      preventAutoScroll: !config?.preventAutoScroll,
+    };
+    updateConfig(newConfig);
+    await onConfigChanged();
+  };
+
   return (
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center space-x-2">
@@ -95,6 +104,28 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
         <p className="text-xs text-muted-foreground mt-1 ml-6">
           Show only the latest session when multiple sessions have the same
           title
+        </p>
+      )}
+
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id={`${checkboxId}-autoscroll`}
+          checked={config?.preventAutoScroll}
+          onCheckedChange={handlePreventAutoScrollChange}
+        />
+        {showLabels && (
+          <label
+            htmlFor={`${checkboxId}-autoscroll`}
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Prevent auto-scroll during processing
+          </label>
+        )}
+      </div>
+      {showDescriptions && (
+        <p className="text-xs text-muted-foreground mt-1 ml-6">
+          Disable automatic scrolling to bottom while "Claude Code is
+          processing..."
         </p>
       )}
     </div>

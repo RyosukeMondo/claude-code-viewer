@@ -119,7 +119,10 @@ export interface NavigateToProjectData {
   projectId: string;
   taskId: string;
   originalPrompt?: string;
-  reason: "spec_workflow_incomplete" | "auto_continue_failed";
+  reason:
+    | "spec_workflow_incomplete"
+    | "spec_workflow_no_activity"
+    | "auto_continue_failed";
   autoContinue?: boolean;
 }
 

@@ -5,6 +5,7 @@ import { ExternalLinkIcon, GitCompareIcon, MenuIcon } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useRef, useState } from "react";
+import { useConfig } from "@/app/hooks/useConfig";
 import { Button } from "@/components/ui/button";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { Badge } from "../../../../../../components/ui/badge";
@@ -28,6 +29,7 @@ export const SessionPageContent: FC<{
     sessionId,
   );
   const { data: project } = useProject(projectId);
+  const { config } = useConfig();
 
   const abortTask = useMutation({
     mutationFn: async (sessionId: string) => {
@@ -58,7 +60,8 @@ export const SessionPageContent: FC<{
   useEffect(() => {
     if (
       (isRunningTask || isPausedTask) &&
-      conversations.length !== previousConversationLength
+      conversations.length !== previousConversationLength &&
+      !config?.preventAutoScroll
     ) {
       setPreviousConversationLength(conversations.length);
       const scrollContainer = scrollContainerRef.current;
@@ -69,7 +72,13 @@ export const SessionPageContent: FC<{
         });
       }
     }
-  }, [conversations, isRunningTask, isPausedTask, previousConversationLength]);
+  }, [
+    conversations,
+    isRunningTask,
+    isPausedTask,
+    previousConversationLength,
+    config?.preventAutoScroll,
+  ]);
 
   return (
     <div className="flex h-screen max-h-screen overflow-hidden">
