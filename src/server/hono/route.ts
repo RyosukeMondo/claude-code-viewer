@@ -7,7 +7,7 @@ import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { configSchema } from "../config/config";
 import { ClaudeCodeTaskController } from "../service/claude-code/ClaudeCodeTaskController";
-import type { SerializableAliveTask } from "../service/claude-code/types";
+import type { SerializableAliveTask } from "../service/claude-code/core/task-types";
 import { getEventBus } from "../service/events/EventBus";
 import { getFileWatcher } from "../service/events/fileWatcher";
 import { sseEventResponse } from "../service/events/sseEventResponse";

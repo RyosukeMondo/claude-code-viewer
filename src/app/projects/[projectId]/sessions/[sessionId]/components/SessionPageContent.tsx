@@ -45,7 +45,7 @@ export const SessionPageContent: FC<{
     },
   });
 
-  const { isRunningTask, isPausedTask } = useAliveTask(sessionId);
+  const { isRunningTask, isPausedTask } = useAliveTask(sessionId, projectId);
 
   // Set up task completion notifications
   useTaskNotifications(isRunningTask);

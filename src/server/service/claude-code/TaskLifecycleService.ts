@@ -1,45 +1,40 @@
 import type { EventBus } from "../events/EventBus";
-import type { AliveClaudeCodeTask, ClaudeCodeTask } from "./types";
+import { TaskGuards, type AliveTask, type Task } from "./core/task-types";
 
 /**
  * Manages task lifecycle states and transitions.
  * Responsible for task state management and notifications.
  */
 export class TaskLifecycleService {
-  private tasks: ClaudeCodeTask[] = [];
+  private tasks: Task[] = [];
   private eventBus: EventBus;
 
   constructor(eventBus: EventBus) {
     this.eventBus = eventBus;
   }
 
-  public get aliveTasks(): AliveClaudeCodeTask[] {
-    return this.tasks.filter(
-      (task): task is AliveClaudeCodeTask =>
-        task.status === "running" || task.status === "paused",
-    );
+  public get aliveTasks(): AliveTask[] {
+    return this.tasks.filter(TaskGuards.isAlive);
   }
 
-  public getAllTasks(): ClaudeCodeTask[] {
+  public getAllTasks(): Task[] {
     return [...this.tasks];
   }
 
-  public findTaskById(taskId: string): ClaudeCodeTask | undefined {
+  public findTaskById(taskId: string): Task | undefined {
     return this.tasks.find((task) => task.id === taskId);
   }
 
-  public findTaskBySessionId(
-    sessionId: string,
-  ): AliveClaudeCodeTask | undefined {
+  public findTaskBySessionId(sessionId: string): AliveTask | undefined {
     return this.aliveTasks.find((task) => task.sessionId === sessionId);
   }
 
-  public addTask(task: ClaudeCodeTask): void {
+  public addTask(task: Task): void {
     this.tasks.push(task);
     this.emitTaskChanged();
   }
 
-  public updateTask(updatedTask: ClaudeCodeTask): void {
+  public updateTask(updatedTask: Task): void {
     const index = this.tasks.findIndex((task) => task.id === updatedTask.id);
     if (index === -1) {
       throw new Error(`Task not found: ${updatedTask.id}`);
