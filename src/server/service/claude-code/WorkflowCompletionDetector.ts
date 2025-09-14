@@ -51,11 +51,11 @@ export class WorkflowCompletionDetector {
 
   private async getTaskProgress(task: AliveClaudeCodeTask) {
     const { getSession } = await import("../session/getSession");
-    const { session } = await getSession(task.projectId, task.sessionId!);
+    const { session } = await getSession(task.projectId, task.sessionId ?? "");
     return taskMonitoringService.monitorSession(session, task.id);
   }
 
-  private isWorkflowCompleted(taskProgress: any): boolean {
+  private isWorkflowCompleted(taskProgress: unknown): boolean {
     return taskMonitoringService.isAllTasksCompleted(taskProgress);
   }
 }

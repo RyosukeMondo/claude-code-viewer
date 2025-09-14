@@ -1,5 +1,5 @@
 import type { EventBus } from "../events/EventBus";
-import { TaskGuards, type AliveTask, type Task } from "./core/task-types";
+import { type AliveTask, type Task, TaskGuards } from "./core/task-types";
 
 /**
  * Manages task lifecycle states and transitions.

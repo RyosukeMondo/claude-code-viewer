@@ -5,7 +5,7 @@ type BaseClaudeCodeTask = {
   projectId: string;
   baseSessionId?: string | undefined; // undefined = new session
   cwd: string;
-  completionCondition?: "spec-workflow" | undefined; // completion condition for automatic continuation
+  completionCondition?: "spec-workflow" | "manual" | undefined; // completion condition for automatic continuation
   originalPrompt?: string; // store original user prompt for session continuation
   autoContinue?: boolean; // whether to automatically continue when workflow is incomplete
   lastActivity: number; // timestamp of last message activity
@@ -74,6 +74,6 @@ export type TaskSessionConfig = {
   cwd: string;
   projectId: string;
   sessionId?: string;
-  completionCondition?: "spec-workflow" | undefined;
+  completionCondition?: "spec-workflow" | "manual" | undefined;
   autoContinue?: boolean;
 };

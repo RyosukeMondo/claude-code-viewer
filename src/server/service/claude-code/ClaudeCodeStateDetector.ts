@@ -5,7 +5,11 @@
 export type ClaudeCodeState = "running" | "idle" | "error";
 
 export interface ClaudeStateContext {
-  lastMessage: any;
+  lastMessage: {
+    type?: string;
+    error?: unknown;
+    content?: unknown;
+  } | null;
   isStreamActive: boolean;
   isLastMessage: boolean;
   messageType?: string;

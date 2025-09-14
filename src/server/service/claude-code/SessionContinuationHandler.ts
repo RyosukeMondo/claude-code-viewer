@@ -52,7 +52,7 @@ export class SessionContinuationHandler {
             completionCondition: currentTask.completionCondition,
             autoContinue: currentTask.autoContinue,
           },
-          currentTask.originalPrompt!,
+          currentTask.originalPrompt || "Continue previous task",
         );
 
         console.log(
@@ -136,8 +136,8 @@ export class SessionContinuationHandler {
         type: "navigate_to_session" as const,
         data: {
           projectId,
-          sessionId: newTask.sessionId!,
-          userMessageId: newTask.userMessageId!,
+          sessionId: newTask.sessionId ?? "",
+          userMessageId: newTask.userMessageId ?? "",
           reason: "auto_continue_success" as const,
         },
       });

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
 import { honoClient } from "../../../../../../lib/api/client";
+import type { SerializableAliveTask } from "../../../../../../server/service/claude-code/core/task-types";
 import { aliveTasksAtom } from "../store/aliveTasksAtom";
 
 /**
@@ -32,7 +33,7 @@ export const useAliveTask = (sessionId: string, _projectId: string) => {
     refetchInterval: (data) => {
       // Adaptive polling: faster when tasks are running, slower when idle
       const hasRunningTasks = data?.aliveTasks?.some(
-        (task: any) => task.status === "running",
+        (task: SerializableAliveTask) => task.status === "running",
       );
       return hasRunningTasks ? 2000 : 10000; // 2s when running, 10s when idle
     },

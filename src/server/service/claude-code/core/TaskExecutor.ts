@@ -33,9 +33,10 @@ export class TaskExecutor {
    */
   async continueTask(_task: AliveTask, message: string): Promise<void> {
     // Implement message continuation logic
-    const _messageGenerator = createMessageGenerator(message);
+    const messageGenerator = createMessageGenerator(message);
     // Update task with new message generator
     // Process continuation
+    void messageGenerator; // Suppress unused variable warning
   }
 
   private createTaskSession(task: PendingTask) {
@@ -48,7 +49,12 @@ export class TaskExecutor {
     };
   }
 
-  private async processMessageStream(taskSession: any): Promise<AliveTask> {
+  private async processMessageStream(taskSession: {
+    generateMessages: () => string;
+    baseSessionId?: string;
+    cwd: string;
+    abortController: AbortController;
+  }): Promise<AliveTask> {
     return new Promise((resolve, reject) => {
       let resolved = false;
 
@@ -81,7 +87,12 @@ export class TaskExecutor {
     });
   }
 
-  private queryClaudeCode(taskSession: any) {
+  private queryClaudeCode(taskSession: {
+    generateMessages: () => string;
+    baseSessionId?: string;
+    cwd: string;
+    abortController: AbortController;
+  }) {
     return query({
       prompt: taskSession.generateMessages(),
       options: {
@@ -95,8 +106,8 @@ export class TaskExecutor {
   }
 
   private updateTaskFromMessage(
-    taskSession: any,
-    message: any,
+    taskSession: unknown,
+    message: unknown,
   ): AliveTask | undefined {
     if (
       (message.type === "user" || message.type === "assistant") &&

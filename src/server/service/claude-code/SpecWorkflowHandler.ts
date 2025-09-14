@@ -63,12 +63,12 @@ export class SpecWorkflowHandler {
     const { getSession } = await import("../session/getSession");
     const { session } = await getSession(
       currentTask.projectId,
-      currentTask.sessionId!,
+      currentTask.sessionId ?? "",
     );
     return taskMonitoringService.monitorSession(session, currentTask.id);
   }
 
-  private isWorkflowCompleted(taskProgress: any): boolean {
+  private isWorkflowCompleted(taskProgress: unknown): boolean {
     return taskMonitoringService.isAllTasksCompleted(taskProgress);
   }
 

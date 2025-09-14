@@ -15,8 +15,15 @@ export interface TaskStateDecision {
  * Context information needed to make task state decisions
  */
 interface TaskDecisionContext {
-  message: any;
-  currentTask?: any;
+  message: {
+    type?: string;
+    content?: unknown;
+  } | null;
+  currentTask?: {
+    id: string;
+    completionCondition?: string;
+    status: string;
+  } | null;
   isLastMessage: boolean;
   messageType?: string;
 }
@@ -50,7 +57,10 @@ export class TaskStateDecisionEngine {
   }
 
   private handleResultMessage(context: TaskDecisionContext): TaskStateDecision {
-    const task = context.currentTask!;
+    const task = context.currentTask;
+    if (!task) {
+      throw new Error("No current task available for result message handling");
+    }
 
     if (task.completionCondition === "spec-workflow") {
       // Decision will be made by SpecWorkflowHandler

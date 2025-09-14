@@ -23,7 +23,7 @@ const SpecWorkflowSummaryDataSchema = z.object({
 const SpecWorkflowBaseDataSchema = z.object({
   success: z.boolean(),
   message: z.string(),
-  data: z.record(z.string(), z.any()).optional(), // Allow any data structure or undefined
+  data: z.record(z.string(), z.unknown()).optional(), // Allow any data structure or undefined
 });
 
 const SpecWorkflowResultSchema = z.object({
@@ -98,7 +98,13 @@ export class TaskMonitoringService {
     const results: SpecWorkflowResult[] = [];
 
     // Build a map of tool_use_id to tool_use for spec-workflow tools
-    const specWorkflowToolUses = new Map<string, any>();
+    const specWorkflowToolUses = new Map<
+      string,
+      {
+        toolUse: unknown;
+        timestamp: string;
+      }
+    >();
 
     for (const conversation of conversations) {
       // Skip error entries
@@ -183,7 +189,7 @@ export class TaskMonitoringService {
    * @returns Parsed and validated spec-workflow result, or null if not summary data
    */
   public parseToolResult(
-    content: string | any[],
+    content: string | unknown[],
     timestamp?: string,
   ): SpecWorkflowResult | null {
     let jsonContent: string;
@@ -253,7 +259,7 @@ export class TaskMonitoringService {
    * @param progress - Task progress data to validate
    * @throws TaskMonitoringError with specific guidance
    */
-  public validateProgressStructure(progress: any): TaskProgress {
+  public validateProgressStructure(progress: unknown): TaskProgress {
     try {
       // Validate the progress object structure
       if (!progress || typeof progress !== "object") {
@@ -290,9 +296,10 @@ export class TaskMonitoringService {
       const dataObj = data as Record<string, unknown>;
       const dataField = dataObj.data as Record<string, unknown> | undefined;
 
-      if (dataField?.nextTask) return "next-pending";
-      if (dataField?.taskId && dataField?.previousStatus) return "set-status";
-      if (dataField?.summary) return "spec-status";
+      if (dataField && "nextTask" in dataField) return "next-pending";
+      if (dataField && "taskId" in dataField && "previousStatus" in dataField)
+        return "set-status";
+      if (dataField && "summary" in dataField) return "spec-status";
     }
     return "unknown";
   }
