@@ -288,11 +288,11 @@ export class TaskMonitoringService {
   private inferActionFromData(data: unknown): string {
     if (typeof data === "object" && data !== null) {
       const dataObj = data as Record<string, unknown>;
-      const dataField = dataObj["data"] as Record<string, unknown> | undefined;
+      const dataField = dataObj.data as Record<string, unknown> | undefined;
 
-      if (dataField?.["nextTask"]) return "next-pending";
-      if (dataField?.["taskId"] && dataField?.["previousStatus"]) return "set-status";
-      if (dataField?.["summary"]) return "spec-status";
+      if (dataField?.nextTask) return "next-pending";
+      if (dataField?.taskId && dataField?.previousStatus) return "set-status";
+      if (dataField?.summary) return "spec-status";
     }
     return "unknown";
   }

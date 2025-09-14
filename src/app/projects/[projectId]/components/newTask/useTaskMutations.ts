@@ -11,12 +11,10 @@ export interface TaskConfig {
   status: "pending" | "running" | "completed" | "cancelled" | "error";
 }
 
-export interface TaskProgress {
-  taskId: string;
-  sessionId?: string;
-  totalTasks: number;
-  completedTasks: number;
-  lastUpdated: Date;
+export interface TaskProgressResponse {
+  total: number;
+  completed: number;
+  pending: number;
 }
 
 export const useStartTaskMutation = (
@@ -151,17 +149,29 @@ export const useAliveTasksQuery = () => {
   });
 };
 
-export const useTaskProgressMonitor = (sessionId: string | undefined) => {
+export const useTaskProgressMonitor = (
+  projectId: string,
+  sessionId: string | undefined,
+) => {
   return useQuery({
-    queryKey: ["task-progress", sessionId],
-    queryFn: async (): Promise<TaskProgress | null> => {
-      if (!sessionId) return null;
+    queryKey: ["task-progress", projectId, sessionId],
+    queryFn: async (): Promise<TaskProgressResponse | null> => {
+      if (!sessionId || !projectId) return null;
 
-      // This would need to be implemented to monitor conversation for spec-workflow tool usage
-      // For now, return null as placeholder
-      return null;
+      const response = await honoClient.api.projects[":projectId"].tasks[
+        ":sessionId"
+      ].progress.$get({
+        param: { projectId, sessionId },
+      });
+
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      const data = await response.json();
+      return data.taskProgress;
     },
-    enabled: !!sessionId,
+    enabled: !!sessionId && !!projectId,
     refetchInterval: 3000, // Check progress every 3 seconds
     refetchIntervalInBackground: false,
   });

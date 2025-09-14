@@ -354,7 +354,7 @@ export const routes = (app: HonoAppType) => {
 
       .get("/tasks/alive", async (c) => {
         const now = Date.now();
-        const timeoutMs = 120 * 1000; // 120 seconds (2 minutes)
+        const timeoutMs = 300 * 1000; // 300 seconds (5 minutes)
 
         // Check for timed-out tasks and trigger auto-continuation
         for (const task of taskController.aliveTasks) {
@@ -711,6 +711,51 @@ export const routes = (app: HonoAppType) => {
           sessionId: task.sessionId,
           userMessageId: task.userMessageId,
         });
+      })
+
+      .get("/projects/:projectId/tasks/:sessionId/progress", async (c) => {
+        const { projectId, sessionId } = c.req.param();
+
+        try {
+          // Get session data to monitor for spec-workflow tool usage
+          const { session } = await getSession(projectId, sessionId);
+
+          // Use TaskMonitoringService to extract progress from session conversations
+          const { taskMonitoringService } = await import(
+            "../service/TaskMonitoringService"
+          );
+          const taskProgress = taskMonitoringService.monitorSession(
+            session,
+            sessionId,
+          );
+
+          if (!taskProgress) {
+            return c.json({
+              taskProgress: null,
+              message: "No spec-workflow task progress found in session",
+            });
+          }
+
+          // Transform to expected format with total, completed, pending
+          const pending = Math.max(
+            0,
+            taskProgress.totalTasks - taskProgress.completedTasks,
+          );
+
+          return c.json({
+            taskProgress: {
+              total: taskProgress.totalTasks,
+              completed: taskProgress.completedTasks,
+              pending: pending,
+            },
+          });
+        } catch (error) {
+          console.error("Get task progress error:", error);
+          if (error instanceof Error) {
+            return c.json({ error: error.message }, 500);
+          }
+          return c.json({ error: "Failed to get task progress" }, 500);
+        }
       })
   );
 };
