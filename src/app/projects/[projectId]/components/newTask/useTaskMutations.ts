@@ -44,7 +44,7 @@ export const useStartTaskMutation = (
         },
         {
           init: {
-            signal: AbortSignal.timeout(20 * 1000),
+            signal: AbortSignal.timeout(60 * 1000),
           },
         },
       );
@@ -90,7 +90,7 @@ export const useResumeTaskMutation = (
         },
         {
           init: {
-            signal: AbortSignal.timeout(20 * 1000),
+            signal: AbortSignal.timeout(60 * 1000),
           },
         },
       );
