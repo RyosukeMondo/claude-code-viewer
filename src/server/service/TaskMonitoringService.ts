@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { Conversation } from "../../lib/conversation-schema";
 import type { ErrorJsonl, SessionDetail } from "./types";
 
-// Zod schema for spec-workflow tool result validation
+// Zod schemas for spec-workflow tool result validation
 const SpecWorkflowSummarySchema = z.object({
   total: z.number(),
   completed: z.number(),
@@ -10,7 +10,8 @@ const SpecWorkflowSummarySchema = z.object({
   pending: z.number().optional(),
 });
 
-const SpecWorkflowDataSchema = z.object({
+// Schema for responses with summary data (from spec-status actions)
+const SpecWorkflowSummaryDataSchema = z.object({
   success: z.boolean(),
   message: z.string(),
   data: z.object({
@@ -18,10 +19,17 @@ const SpecWorkflowDataSchema = z.object({
   }),
 });
 
+// Flexible schema for any spec-workflow response
+const SpecWorkflowBaseDataSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  data: z.record(z.string(), z.any()).optional(), // Allow any data structure or undefined
+});
+
 const SpecWorkflowResultSchema = z.object({
   toolName: z.literal("mcp__spec-workflow__manage-tasks"),
   timestamp: z.date(),
-  data: SpecWorkflowDataSchema,
+  data: SpecWorkflowSummaryDataSchema,
 });
 
 export type SpecWorkflowResult = z.infer<typeof SpecWorkflowResultSchema>;
@@ -147,9 +155,16 @@ export class TaskMonitoringService {
               );
               if (parsedResult) {
                 results.push(parsedResult);
+                console.log(
+                  `[TaskMonitoringService] Successfully parsed spec-workflow summary data`,
+                );
               }
             } catch (error) {
-              console.warn("Failed to parse spec-workflow tool result:", error);
+              // This should no longer happen with graceful parsing, but keep for safety
+              console.warn(
+                "[TaskMonitoringService] Unexpected error parsing spec-workflow tool result:",
+                error,
+              );
             }
           }
         }
@@ -165,7 +180,7 @@ export class TaskMonitoringService {
    * Parse tool result content and validate against spec-workflow schema
    * @param content - Tool result content (string or array)
    * @param timestamp - Timestamp from conversation entry
-   * @returns Parsed and validated spec-workflow result
+   * @returns Parsed and validated spec-workflow result, or null if not summary data
    */
   public parseToolResult(
     content: string | any[],
@@ -180,6 +195,9 @@ export class TaskMonitoringService {
       const textContent = content.find((item) => item.type === "text");
       jsonContent = textContent?.text || "";
     } else {
+      console.log(
+        "[TaskMonitoringService] Skipping non-string tool result content",
+      );
       return null;
     }
 
@@ -187,19 +205,46 @@ export class TaskMonitoringService {
       // Parse JSON content
       const parsedData = JSON.parse(jsonContent);
 
-      // Validate against spec-workflow data structure
-      const validatedData = SpecWorkflowDataSchema.parse(parsedData);
+      // First, check if this is a basic spec-workflow response
+      const baseValidation = SpecWorkflowBaseDataSchema.safeParse(parsedData);
+      if (!baseValidation.success) {
+        console.log(
+          "[TaskMonitoringService] Tool result is not a valid spec-workflow response, skipping",
+        );
+        return null;
+      }
 
+      // Check if this response contains summary data (what we need for monitoring)
+      const summaryValidation =
+        SpecWorkflowSummaryDataSchema.safeParse(parsedData);
+      if (!summaryValidation.success) {
+        // This is a valid spec-workflow response but doesn't contain summary data
+        // (probably from next-pending, set-status, etc.) - skip silently
+        console.log(
+          `[TaskMonitoringService] Spec-workflow response does not contain summary data (action likely: ${this.inferActionFromData(parsedData)}), skipping`,
+        );
+        return null;
+      }
+
+      // Successfully parsed summary data
       return {
         toolName: "mcp__spec-workflow__manage-tasks",
         timestamp: timestamp ? new Date(timestamp) : new Date(),
-        data: validatedData,
+        data: summaryValidation.data,
       };
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw this.createStructureError(error);
+      if (error instanceof SyntaxError) {
+        console.warn(
+          "[TaskMonitoringService] Failed to parse JSON in tool result:",
+          error.message,
+        );
+        return null;
       }
-      throw new Error(`Failed to parse tool result JSON: ${error}`);
+      console.warn(
+        "[TaskMonitoringService] Failed to parse spec-workflow tool result:",
+        error,
+      );
+      return null;
     }
   }
 
@@ -236,56 +281,20 @@ export class TaskMonitoringService {
   }
 
   /**
-   * Create descriptive error for spec-workflow data structure changes
+   * Infer the action type from spec-workflow response data
+   * @param data - Parsed response data
+   * @returns Likely action name
    */
-  private createStructureError(zodError: z.ZodError): TaskMonitoringError {
-    const issues = zodError.issues;
+  private inferActionFromData(data: unknown): string {
+    if (typeof data === "object" && data !== null) {
+      const dataObj = data as Record<string, unknown>;
+      const dataField = dataObj["data"] as Record<string, unknown> | undefined;
 
-    // Check for missing summary object
-    const summaryMissing = issues.some(
-      (issue) =>
-        issue.path.includes("summary") && issue.code === "invalid_type",
-    );
-
-    if (summaryMissing) {
-      return {
-        type: "structure",
-        message:
-          "Spec-workflow data structure missing 'summary'. Check spec-workflow system for changes.",
-        details:
-          "The expected data.summary object is not present in the tool result",
-        timestamp: new Date(),
-      };
+      if (dataField?.["nextTask"]) return "next-pending";
+      if (dataField?.["taskId"] && dataField?.["previousStatus"]) return "set-status";
+      if (dataField?.["summary"]) return "spec-status";
     }
-
-    // Check for missing total/completed properties
-    const totalMissing = issues.some(
-      (issue) => issue.path.includes("total") && issue.code === "invalid_type",
-    );
-    const completedMissing = issues.some(
-      (issue) =>
-        issue.path.includes("completed") && issue.code === "invalid_type",
-    );
-
-    if (totalMissing || completedMissing) {
-      return {
-        type: "structure",
-        message:
-          "Spec-workflow summary structure changed. Expected 'total' and 'completed' properties. Check spec-workflow specification for updates.",
-        details:
-          `Missing properties: ${totalMissing ? "total" : ""} ${completedMissing ? "completed" : ""}`.trim(),
-        timestamp: new Date(),
-      };
-    }
-
-    // Generic structure error
-    return {
-      type: "structure",
-      message:
-        "Spec-workflow data structure validation failed. Check spec-workflow specification for structural changes.",
-      details: zodError.message,
-      timestamp: new Date(),
-    };
+    return "unknown";
   }
 
   /**
