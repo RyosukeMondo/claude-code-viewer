@@ -74,12 +74,32 @@ export class TaskExecutor {
   /**
    * Continue an existing task with new message
    */
-  async continueTask(_task: AliveTask, message: string): Promise<void> {
-    // Implement message continuation logic
+  async continueTask(task: AliveTask, message: string): Promise<void> {
+    console.log(`[TaskExecutor] Continuing task ${task.id} with new message`);
+
+    // Update lastActivity timestamp immediately
+    const updatedTask = { ...task, lastActivity: Date.now() };
+    this.lifecycle.updateTask(updatedTask);
+
+    // Create new message generator and continue processing
     const messageGenerator = createMessageGenerator(message);
-    // Update task with new message generator
-    // Process continuation
-    void messageGenerator; // Suppress unused variable warning
+
+    // Start processing the new message stream for this task
+    try {
+      // Create a new session context for continuation
+      const taskSession = {
+        ...updatedTask,
+        ...messageGenerator,
+        abortController: new AbortController(),
+      };
+
+      // Process the continuation message stream
+      await this.processMessageStream(taskSession);
+    } catch (error) {
+      console.error(`[TaskExecutor] Error continuing task ${task.id}:`, error);
+      this.lifecycle.failTask(task.id);
+      throw error;
+    }
   }
 
   private createTaskSession(task: PendingTask): TaskSession {
@@ -179,11 +199,12 @@ export class TaskExecutor {
   ): Promise<void> {
     if (!task) return;
 
-    // Update activity timestamp safely (note: readonly properties require lifecycle service update)
+    // Update activity timestamp safely using lifecycle service for immutable updates
     if (task.status === "running") {
-      // Note: Cannot directly modify readonly lastActivity property
-      // This would need to be handled through lifecycle service for proper immutable updates
       console.log(`[TaskExecutor] Activity detected for task ${task.id}`);
+      // Update lastActivity timestamp through lifecycle service
+      const updatedTask = { ...task, lastActivity: Date.now() };
+      this.lifecycle.updateTask(updatedTask);
     }
 
     // Detect state and handle accordingly

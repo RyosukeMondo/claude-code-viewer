@@ -8,16 +8,28 @@ export const parseJsonl = (content: string) => {
     .filter((line) => line.trim() !== "");
 
   return lines.map((line) => {
-    const parsed = ConversationSchema.safeParse(JSON.parse(line));
-    if (!parsed.success) {
-      console.warn("Failed to parse jsonl, skipping", parsed.error);
+    try {
+      const parsed = ConversationSchema.safeParse(JSON.parse(line));
+      if (!parsed.success) {
+        console.warn("Failed to parse jsonl, skipping", parsed.error);
+        const errorData: ErrorJsonl = {
+          type: "x-error",
+          line,
+        };
+        return errorData;
+      }
+
+      return parsed.data;
+    } catch (jsonError) {
+      console.warn("Failed to parse JSON line, skipping:", {
+        line,
+        error: jsonError,
+      });
       const errorData: ErrorJsonl = {
         type: "x-error",
         line,
       };
       return errorData;
     }
-
-    return parsed.data;
   });
 };

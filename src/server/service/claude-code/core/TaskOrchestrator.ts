@@ -32,13 +32,15 @@ export class TaskOrchestrator {
   /**
    * Abort a running task
    */
-  abortTask(sessionId: string): void {
+  abortTask(sessionId: string, reason?: string): void {
     const task = this.lifecycle.findTaskBySessionId(sessionId);
     if (!task) {
       throw new Error(`Task not found for session: ${sessionId}`);
     }
 
-    task.abortController.abort();
+    // Provide a reason for the abort to distinguish between user and system aborts
+    const abortReason = reason || "Task aborted by user";
+    task.abortController.abort(new Error(abortReason));
     this.lifecycle.failTask(task.id);
   }
 

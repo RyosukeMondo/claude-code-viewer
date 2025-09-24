@@ -69,6 +69,21 @@ export type SSEEvent = BaseSSEEvent &
         type: "navigate_to_session";
         data: NavigateToSessionData;
       }
+    | {
+        type: "background_service_started";
+        data: BackgroundServiceStartedData;
+      }
+    | {
+        type: "background_service_stopped";
+      }
+    | {
+        type: "task_session_continued";
+        data: TaskSessionContinuedData;
+      }
+    | {
+        type: "task_continue_error";
+        data: TaskContinueErrorData;
+      }
   );
 
 export interface ProjectChangedData {
@@ -131,4 +146,23 @@ export interface NavigateToSessionData {
   sessionId: string;
   userMessageId: string;
   reason: "auto_continue_success";
+}
+
+export interface BackgroundServiceStartedData {
+  checkIntervalMs: number;
+  timeoutMs: number;
+}
+
+export interface TaskSessionContinuedData {
+  taskId: string;
+  oldSessionId?: string;
+  newSessionId: string;
+  projectId: string;
+}
+
+export interface TaskContinueErrorData {
+  taskId: string;
+  sessionId: string;
+  projectId: string;
+  error: string;
 }

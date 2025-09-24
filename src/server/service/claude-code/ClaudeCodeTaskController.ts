@@ -46,8 +46,8 @@ export class ClaudeCodeTaskController {
     return this.taskOrchestrator.startOrContinueTask(sessionConfig, message);
   }
 
-  public abortTask(sessionId: string): void {
-    this.taskOrchestrator.abortTask(sessionId);
+  public abortTask(sessionId: string, reason?: string): void {
+    this.taskOrchestrator.abortTask(sessionId, reason);
   }
 
   private setupCleanupHandlers(): void {
