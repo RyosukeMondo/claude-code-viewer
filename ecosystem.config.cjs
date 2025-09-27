@@ -2,11 +2,9 @@ module.exports = {
   apps: [
     {
       name: 'claude-viewer-3401',
-      script: 'node_modules/.bin/next',
-      args: 'dev -p 3401 -H 0.0.0.0',
+      script: './start-3401.sh',
       cwd: process.cwd(),
       env: {
-        PORT: 3401,
         NODE_ENV: 'development'
       },
       watch: false,
@@ -16,11 +14,9 @@ module.exports = {
     },
     {
       name: 'claude-viewer-3402',
-      script: 'node_modules/.bin/next',
-      args: 'dev -p 3402 -H 0.0.0.0',
+      script: './start-3402.sh',
       cwd: process.cwd(),
       env: {
-        PORT: 3402,
         NODE_ENV: 'development'
       },
       watch: false,
@@ -30,11 +26,9 @@ module.exports = {
     },
     {
       name: 'claude-viewer-3403',
-      script: 'node_modules/.bin/next',
-      args: 'dev -p 3403 -H 0.0.0.0',
+      script: './start-3403.sh',
       cwd: process.cwd(),
       env: {
-        PORT: 3403,
         NODE_ENV: 'development'
       },
       watch: false,
@@ -44,11 +38,9 @@ module.exports = {
     },
     {
       name: 'claude-viewer-3404',
-      script: 'node_modules/.bin/next',
-      args: 'dev -p 3404 -H 0.0.0.0',
+      script: './start-3404.sh',
       cwd: process.cwd(),
       env: {
-        PORT: 3404,
         NODE_ENV: 'development'
       },
       watch: false,
@@ -58,11 +50,9 @@ module.exports = {
     },
     {
       name: 'claude-viewer-3405',
-      script: 'node_modules/.bin/next',
-      args: 'dev -p 3405 -H 0.0.0.0',
+      script: './start-3405.sh',
       cwd: process.cwd(),
       env: {
-        PORT: 3405,
         NODE_ENV: 'development'
       },
       watch: false,
