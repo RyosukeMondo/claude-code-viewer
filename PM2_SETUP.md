@@ -70,9 +70,9 @@ Once started, your instances will be available at:
 
 ## Configuration
 
-The `ecosystem.config.js` file defines 5 instances by default. To modify:
+The `ecosystem.config.cjs` file defines 5 instances by default. To modify:
 
-1. Edit `ecosystem.config.js`
+1. Edit `ecosystem.config.cjs`
 2. Add/remove app configurations
 3. Restart PM2: `pnpm pm2:restart`
 
