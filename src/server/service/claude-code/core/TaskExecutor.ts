@@ -54,35 +54,30 @@ export class TaskExecutor {
   }
 
   private async initializeClaudePath(): Promise<void> {
+    // ALWAYS use absolute path to avoid relative path issues in spawned processes
+    const absoluteClaudePath = resolve(process.cwd(), "node_modules/.bin/claude");
+
     try {
+      // Test if the local claude binary exists
+      await execAsync(`ls -la "${absoluteClaudePath}"`);
+      this.claudeExecutablePath = absoluteClaudePath;
+      console.log(`[TaskExecutor] Using local claude executable at: ${this.claudeExecutablePath}`);
+      return;
+    } catch (localError) {
+      console.warn(`[TaskExecutor] Local claude not found at ${absoluteClaudePath}:`, localError);
+    }
+
+    try {
+      // Fallback to system claude
       const { stdout } = await execAsync("which claude");
       this.claudeExecutablePath = stdout.trim();
-      console.log(`[TaskExecutor] Found claude executable at: ${this.claudeExecutablePath}`);
+      console.log(`[TaskExecutor] Using system claude executable at: ${this.claudeExecutablePath}`);
     } catch (error) {
-      console.warn("[TaskExecutor] 'which claude' failed, trying fallback paths:", error);
+      console.warn("[TaskExecutor] System claude not found, trying global fallback:", error);
 
-      // Try common fallback paths
-      const fallbackPaths = [
-        resolve(process.cwd(), "node_modules/.bin/claude"),
-        "/home/rmondo/.nvm/versions/node/v22.19.0/bin/claude",
-        "claude" // Let the system PATH handle it
-      ];
-
-      for (const path of fallbackPaths) {
-        try {
-          // Test if the path exists and is executable
-          await execAsync(`ls -la "${path}"`);
-          this.claudeExecutablePath = path;
-          console.log(`[TaskExecutor] Using fallback claude executable at: ${this.claudeExecutablePath}`);
-          return;
-        } catch (fallbackError) {
-          console.warn(`[TaskExecutor] Fallback path ${path} not accessible:`, fallbackError);
-        }
-      }
-
-      // If all fallbacks fail, use the absolute path as last resort
-      this.claudeExecutablePath = resolve(process.cwd(), "node_modules/.bin/claude");
-      console.warn(`[TaskExecutor] All paths failed, using last resort: ${this.claudeExecutablePath}`);
+      // Final fallback to known global path
+      this.claudeExecutablePath = "/home/rmondo/.nvm/versions/node/v22.19.0/bin/claude";
+      console.warn(`[TaskExecutor] Using global fallback: ${this.claudeExecutablePath}`);
     }
   }
 
@@ -175,6 +170,9 @@ export class TaskExecutor {
     if (!this.claudeExecutablePath) {
       throw new Error("Claude executable path not initialized");
     }
+
+    console.log(`[TaskExecutor] Debug - cwd: ${taskSession.cwd}, claudePath: ${this.claudeExecutablePath}, process.cwd(): ${process.cwd()}`);
+
     return query({
       prompt: taskSession.generateMessages(),
       options: {

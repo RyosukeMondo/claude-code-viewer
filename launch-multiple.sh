@@ -42,9 +42,9 @@ start_instance() {
         return 1
     fi
 
-    # Create tmux window and start Next.js
+    # Create tmux window and start Next.js with proper environment
     tmux new-window -t "$SESSION_NAME" -n "$window_name" -d \
-        "cd '$PWD' && PORT=$port pnpm next dev -p $port -H 0.0.0.0 --turbopack"
+        "cd '$PWD' && export PATH='$PWD/node_modules/.bin:$PATH' && PORT=$port pnpm next dev -p $port -H 0.0.0.0 --turbopack"
 
     # Wait a moment for startup
     sleep 2
