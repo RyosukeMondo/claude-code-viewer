@@ -5,7 +5,8 @@ module.exports = {
       script: './start-3401.sh',
       cwd: process.cwd(),
       env: {
-        NODE_ENV: 'development'
+        NODE_ENV: 'development',
+        PATH: `${process.cwd()}/node_modules/.bin:${process.env.PATH}`
       },
       watch: false,
       instances: 1,
@@ -17,7 +18,8 @@ module.exports = {
       script: './start-3402.sh',
       cwd: process.cwd(),
       env: {
-        NODE_ENV: 'development'
+        NODE_ENV: 'development',
+        PATH: `${process.cwd()}/node_modules/.bin:${process.env.PATH}`
       },
       watch: false,
       instances: 1,
@@ -29,7 +31,8 @@ module.exports = {
       script: './start-3403.sh',
       cwd: process.cwd(),
       env: {
-        NODE_ENV: 'development'
+        NODE_ENV: 'development',
+        PATH: `${process.cwd()}/node_modules/.bin:${process.env.PATH}`
       },
       watch: false,
       instances: 1,
@@ -41,7 +44,8 @@ module.exports = {
       script: './start-3404.sh',
       cwd: process.cwd(),
       env: {
-        NODE_ENV: 'development'
+        NODE_ENV: 'development',
+        PATH: `${process.cwd()}/node_modules/.bin:${process.env.PATH}`
       },
       watch: false,
       instances: 1,
@@ -53,7 +57,8 @@ module.exports = {
       script: './start-3405.sh',
       cwd: process.cwd(),
       env: {
-        NODE_ENV: 'development'
+        NODE_ENV: 'development',
+        PATH: `${process.cwd()}/node_modules/.bin:${process.env.PATH}`
       },
       watch: false,
       instances: 1,
