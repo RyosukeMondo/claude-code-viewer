@@ -1,5 +1,6 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
+import { resolve } from "node:path";
 import { query } from "@anthropic-ai/claude-code";
 import {
   createMessageGenerator,
@@ -56,9 +57,32 @@ export class TaskExecutor {
     try {
       const { stdout } = await execAsync("which claude");
       this.claudeExecutablePath = stdout.trim();
+      console.log(`[TaskExecutor] Found claude executable at: ${this.claudeExecutablePath}`);
     } catch (error) {
-      console.error("[TaskExecutor] Failed to find claude executable:", error);
-      throw new Error("Claude executable not found in PATH");
+      console.warn("[TaskExecutor] 'which claude' failed, trying fallback paths:", error);
+
+      // Try common fallback paths
+      const fallbackPaths = [
+        resolve(process.cwd(), "node_modules/.bin/claude"),
+        "/home/rmondo/.nvm/versions/node/v22.19.0/bin/claude",
+        "claude" // Let the system PATH handle it
+      ];
+
+      for (const path of fallbackPaths) {
+        try {
+          // Test if the path exists and is executable
+          await execAsync(`ls -la "${path}"`);
+          this.claudeExecutablePath = path;
+          console.log(`[TaskExecutor] Using fallback claude executable at: ${this.claudeExecutablePath}`);
+          return;
+        } catch (fallbackError) {
+          console.warn(`[TaskExecutor] Fallback path ${path} not accessible:`, fallbackError);
+        }
+      }
+
+      // If all fallbacks fail, use the absolute path as last resort
+      this.claudeExecutablePath = resolve(process.cwd(), "node_modules/.bin/claude");
+      console.warn(`[TaskExecutor] All paths failed, using last resort: ${this.claudeExecutablePath}`);
     }
   }
 
