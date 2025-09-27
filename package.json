@@ -39,15 +39,12 @@
     "multi:stop": "./launch-multiple.sh stop",
     "multi:status": "./launch-multiple.sh status",
     "multi:restart": "./launch-multiple.sh restart",
-    "pm2:start": "pm2 start ecosystem.config.cjs",
-    "pm2:stop": "pm2 stop ecosystem.config.cjs",
-    "pm2:restart": "pm2 restart ecosystem.config.cjs",
-    "pm2:delete": "pm2 delete ecosystem.config.cjs",
-    "pm2:list": "pm2 list",
-    "pm2:logs": "pm2 logs",
-    "pm2:monit": "pm2 monit",
-    "pm2:save": "pm2 save",
-    "pm2:startup": "pm2 startup"
+    "multi:logs": "./launch-multiple.sh logs",
+    "multi:logs:3401": "./launch-multiple.sh logs 3401",
+    "multi:logs:3402": "./launch-multiple.sh logs 3402",
+    "multi:logs:3403": "./launch-multiple.sh logs 3403",
+    "multi:logs:3404": "./launch-multiple.sh logs 3404",
+    "multi:logs:3405": "./launch-multiple.sh logs 3405"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^1.0.98",

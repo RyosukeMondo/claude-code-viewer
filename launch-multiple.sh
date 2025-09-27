@@ -105,6 +105,77 @@ show_status() {
     fi
 }
 
+# Function to show logs for all instances
+show_logs_all() {
+    echo -e "${BLUE}📋 Logs for all instances:${NC}"
+    echo -e "${BLUE}=========================${NC}"
+
+    if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+        echo -e "${RED}❌ No tmux session found. Start instances first.${NC}"
+        return 1
+    fi
+
+    for port in "${PORTS[@]}"; do
+        local window_name="port-$port"
+        echo -e "${YELLOW}--- Port $port (last 10 lines) ---${NC}"
+
+        if tmux list-windows -t "$SESSION_NAME" | grep -q "$window_name"; then
+            tmux capture-pane -t "$SESSION_NAME:$window_name" -p | tail -10
+        else
+            echo -e "${RED}Window $window_name not found${NC}"
+        fi
+        echo ""
+    done
+}
+
+# Function to show logs for specific port
+show_logs_port() {
+    local port=$1
+    local lines=${2:-50}
+    local window_name="port-$port"
+
+    echo -e "${BLUE}📋 Logs for port $port (last $lines lines):${NC}"
+    echo -e "${BLUE}======================================${NC}"
+
+    if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+        echo -e "${RED}❌ No tmux session found. Start instances first.${NC}"
+        return 1
+    fi
+
+    if tmux list-windows -t "$SESSION_NAME" | grep -q "$window_name"; then
+        tmux capture-pane -t "$SESSION_NAME:$window_name" -p | tail -$lines
+    else
+        echo -e "${RED}❌ Window $window_name not found${NC}"
+        return 1
+    fi
+}
+
+# Function to follow logs for specific port
+follow_logs_port() {
+    local port=$1
+    local window_name="port-$port"
+
+    echo -e "${BLUE}📋 Following logs for port $port (Press Ctrl+C to stop):${NC}"
+    echo -e "${BLUE}====================================================${NC}"
+
+    if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+        echo -e "${RED}❌ No tmux session found. Start instances first.${NC}"
+        return 1
+    fi
+
+    if ! tmux list-windows -t "$SESSION_NAME" | grep -q "$window_name"; then
+        echo -e "${RED}❌ Window $window_name not found${NC}"
+        return 1
+    fi
+
+    echo -e "${YELLOW}Connecting to tmux window for port $port...${NC}"
+    echo -e "${YELLOW}Press Ctrl+B, d to detach from session${NC}"
+    echo ""
+
+    # Attach to specific window
+    tmux attach-session -t "$SESSION_NAME:$window_name"
+}
+
 # Function to restart all instances
 restart_instances() {
     echo -e "${YELLOW}Restarting all instances...${NC}"
@@ -169,14 +240,39 @@ case "${1:-start}" in
     restart)
         restart_instances
         ;;
+    logs)
+        if [ -z "$2" ]; then
+            show_logs_all
+        else
+            show_logs_port "$2" "$3"
+        fi
+        ;;
+    follow)
+        if [ -z "$2" ]; then
+            echo -e "${RED}❌ Port number required for follow command${NC}"
+            echo -e "${BLUE}Usage: $0 follow <port>${NC}"
+            exit 1
+        fi
+        follow_logs_port "$2"
+        ;;
     *)
-        echo -e "${BLUE}Usage: $0 {start|stop|status|restart}${NC}"
+        echo -e "${BLUE}Usage: $0 {start|stop|status|restart|logs|follow}${NC}"
         echo ""
         echo -e "${BLUE}Commands:${NC}"
-        echo -e "${BLUE}  start   - Start all instances (default)${NC}"
-        echo -e "${BLUE}  stop    - Stop all instances${NC}"
-        echo -e "${BLUE}  status  - Show status of all instances${NC}"
-        echo -e "${BLUE}  restart - Restart all instances${NC}"
+        echo -e "${BLUE}  start          - Start all instances (default)${NC}"
+        echo -e "${BLUE}  stop           - Stop all instances${NC}"
+        echo -e "${BLUE}  status         - Show status of all instances${NC}"
+        echo -e "${BLUE}  restart        - Restart all instances${NC}"
+        echo -e "${BLUE}  logs           - Show logs for all instances (last 10 lines each)${NC}"
+        echo -e "${BLUE}  logs <port>    - Show logs for specific port (last 50 lines)${NC}"
+        echo -e "${BLUE}  logs <port> <lines> - Show logs for specific port (custom line count)${NC}"
+        echo -e "${BLUE}  follow <port>  - Follow logs for specific port (live tail)${NC}"
+        echo ""
+        echo -e "${BLUE}Examples:${NC}"
+        echo -e "${BLUE}  $0 logs                    # All instances, 10 lines each${NC}"
+        echo -e "${BLUE}  $0 logs 3401               # Port 3401, 50 lines${NC}"
+        echo -e "${BLUE}  $0 logs 3401 100           # Port 3401, 100 lines${NC}"
+        echo -e "${BLUE}  $0 follow 3401             # Follow port 3401 live${NC}"
         exit 1
         ;;
 esac

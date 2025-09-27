@@ -30,6 +30,32 @@ pnpm run multi:stop
 pnpm run multi:restart
 ```
 
+### Viewing Logs
+
+```bash
+# View logs for all instances (last 10 lines each)
+./launch-multiple.sh logs
+# OR
+pnpm run multi:logs
+
+# View logs for specific port (last 50 lines)
+./launch-multiple.sh logs 3401
+# OR
+pnpm run multi:logs:3401
+
+# View logs for specific port with custom line count
+./launch-multiple.sh logs 3401 100
+
+# Follow logs for specific port (live tail)
+./launch-multiple.sh follow 3401
+
+# Quick access to each port's logs via npm scripts
+pnpm run multi:logs:3402
+pnpm run multi:logs:3403
+pnpm run multi:logs:3404
+pnpm run multi:logs:3405
+```
+
 ### Access Your Instances
 
 Once started, you can access the instances at:
@@ -64,25 +90,39 @@ tmux capture-pane -t claude-viewer:port-3401 -p
 - tmux must be installed: `sudo apt install tmux`
 - All instances run on 0.0.0.0 so they're accessible from Windows via WSL IP
 
-## PM2 Solution (Alternative)
+## Log Management Options
 
-If you prefer PM2, the configuration is still available:
-
+### Option 1: All Instances at Once
 ```bash
-# Start all instances with PM2
-pnpm run pm2:start
-
-# Check PM2 status
-pnpm run pm2:list
-
-# View PM2 logs
-pnpm run pm2:logs
-
-# Stop PM2 instances
-pnpm run pm2:stop
+# Quick overview of all instances
+./launch-multiple.sh logs
+pnpm run multi:logs
 ```
+Shows the last 10 lines from each instance - perfect for a quick health check.
 
-**Note**: PM2 currently has some issues with the Claude Code SDK spawn process. The simple shell script solution above is more reliable.
+### Option 2: Specific Port Logs
+```bash
+# Detailed view of one instance
+./launch-multiple.sh logs 3401 100    # Last 100 lines
+pnpm run multi:logs:3401              # Last 50 lines (default)
+```
+Great for debugging specific issues or monitoring one instance closely.
+
+### Option 3: Live Log Following
+```bash
+# Real-time log monitoring
+./launch-multiple.sh follow 3401
+```
+Attaches directly to the tmux window for that port. Press `Ctrl+B, d` to detach.
+
+### Option 4: Direct tmux Access
+```bash
+# Full tmux session control
+tmux attach -t claude-viewer
+# Then use Ctrl+B, w to see all windows
+# Or Ctrl+B, [0-5] to switch between instances
+```
+Most powerful option - gives you full control over all instances.
 
 ## Ports Configuration
 
